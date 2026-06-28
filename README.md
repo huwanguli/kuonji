@@ -1,6 +1,8 @@
-# Zine
+# Kuonji
 
-一本属于代码的独立杂志。个人博客系统，Go + Gin 后端，Vue 3 前端。
+个人博客系统，Go + Gin 后端，Vue 3 前端。
+
+[huonji.xyz](https://huonji.xyz)
 
 ## 技术栈
 
@@ -31,18 +33,22 @@
 创建数据库：
 
 ```sql
-CREATE DATABASE zblog CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE kuonji CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 ### 2. 后端
 
 ```bash
 cd backend
+# 复制配置模板
+cp config/config.example.yaml config/config.yaml
 # 修改 config/config.yaml 中的数据库连接信息
 go run main.go
 ```
 
 首次启动自动建表并创建默认管理员 `admin` / `admin123`。
+
+数据库密码等敏感配置可通过环境变量覆盖，见[生产部署](#生产部署)。
 
 ### 3. 前端
 
@@ -62,10 +68,13 @@ npm run dev
 ## 项目结构
 
 ```
-zine/
+kuonji/
 ├── backend/
 │   ├── main.go                    # 入口
-│   ├── config/config.yaml         # 配置文件
+│   ├── config/
+│   │   ├── config.example.yaml    # 配置模板
+│   │   └── config.yaml            # 配置（已 gitignore）
+│   ├── Dockerfile                 # 后端镜像
 │   ├── API.md                     # API 文档
 │   └── internal/
 │       ├── config/config.go       # Viper 配置加载
@@ -79,15 +88,20 @@ zine/
 │       ├── dto/                   # 请求/响应结构体
 │       └── utils/                 # 工具 (slug/MD/JWT)
 ├── frontend/
+│   ├── Dockerfile                 # 前端镜像
+│   ├── nginx.conf                 # Nginx 配置（SPA + 反代）
 │   └── src/
 │       ├── main.js                # 入口
 │       ├── App.vue                # 根组件
 │       ├── assets/main.css        # Design tokens + 全局样式
 │       ├── api/index.js           # API 封装
 │       ├── router/index.js        # 路由配置
+│       ├── utils/html.js          # TOC 工具
 │       ├── components/            # 组件
 │       │   ├── NavBar.vue         # 导航栏（访客/管理员自适应）
 │       │   ├── Footer.vue         # 页脚
+│       │   ├── Sidebar.vue        # 侧边栏（分类/系列/标签/目录）
+│       │   ├── AnnouncementBanner.vue  # 公告横幅
 │       │   ├── ArticleCard.vue    # 文章卡片
 │       │   ├── ArticleList.vue    # 文章列表 + 分页
 │       │   ├── CommentList.vue    # 评论列表
@@ -98,8 +112,8 @@ zine/
 │           ├── AdminView.vue      # 管理面板
 │           ├── AdminArticles.vue  # 文章管理列表
 │           └── EditorView.vue     # Markdown 编辑器
-└── docs/
-    └── superpowers/specs/         # 设计文档
+├── docker-compose.yml             # 容器编排
+└── .env.example                   # 环境变量模板
 ```
 
 ## 架构
@@ -122,6 +136,7 @@ Model (GORM 模型定义)
 |------|------|------|
 | GET | `/api/articles` | 文章列表（分页/分类/标签/系列筛选） |
 | GET | `/api/articles/:slug` | 文章详情（阅读量 +1，含系列前后篇） |
+| GET | `/api/announcements` | 公告列表 |
 | GET | `/api/series` | 系列列表 |
 | GET | `/api/categories` | 分类列表 |
 | GET | `/api/tags` | 标签列表 |
@@ -144,7 +159,7 @@ Model (GORM 模型定义)
 
 ## 配置
 
-`backend/config/config.yaml`：
+`backend/config/config.yaml`（从 `config.example.yaml` 复制）：
 
 ```yaml
 server:
@@ -159,12 +174,12 @@ database:
   dbname: zblog
 
 jwt:
-  secret: change-me-to-a-random-string
+  secret: ""
   expire: 24h
 
 log:
   level: debug
-  file: logs/zine.log
+  file: /logs/zblog.log
   max_age: 30
   max_size: 100
 
@@ -174,17 +189,25 @@ upload:
   allowed_exts: [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"]
 ```
 
-数据库密码可通过环境变量 `ZBLOG_DB_PASSWORD` 覆盖，避免写入文件。
+敏感字段（password、secret）留空，通过环境变量注入：
+
+| 环境变量 | 对应字段 |
+|----------|----------|
+| `ZBLOG_DATABASE_HOST` | database.host |
+| `ZBLOG_DATABASE_PASSWORD` | database.password |
+| `ZBLOG_JWT_SECRET` | jwt.secret |
+| `ZBLOG_SERVER_MODE` | server.mode |
+| `ZBLOG_LOG_LEVEL` | log.level |
 
 ## 前端页面
 
 | 路径 | 名称 | 说明 |
 |------|------|------|
-| `/` | 首页 | Hero + 分类筛选 + 文章列表 |
-| `/article/:slug` | 文章详情 | 正文 + 评论 + 相关文章 |
+| `/` | 首页 | 公告横幅 + 随机标语 + 文章列表 + 侧边栏 |
+| `/article/:slug` | 文章详情 | 正文 + 目录 + 评论 + 相关文章 |
 | `/admin` | 管理面板 | 登录 + 分类/标签管理 |
 | `/admin/articles` | 文章管理 | 列表/筛选/编辑/删除 |
-| `/editor` | 写文章 | Markdown 分栏编辑器 |
+| `/editor` | 写文章 | Markdown 分栏编辑器 + 图片上传 |
 | `/editor/:id` | 编辑文章 | 同上 |
 
 导航栏在 `/admin*` 和 `/editor*` 路径下自动切换为管理导航，其余路径显示访客导航。
@@ -231,12 +254,27 @@ cd frontend && npm run build
 
 ## 生产部署
 
+### Docker Compose（推荐）
+
+```bash
+# 1. 配置环境变量
+cp .env.example .env
+# 编辑 .env 填入数据库密码和 JWT 密钥
+
+# 2. 构建并启动
+docker compose up -d --build
+```
+
+架构：`nginx:80` → 静态前端 + 反代 `/api` `/uploads` → `backend:8080` → MySQL。
+
+### 手动部署
+
 ```bash
 # 构建前端
 cd frontend && npm run build     # 输出到 dist/
 
 # 构建后端
-cd backend && go build -o zine .
+cd backend && go build -o kuonji .
 
 # 部署：Nginx 将 / 指向 frontend/dist/，/api /uploads 反代到后端 8080 端口
 ```
