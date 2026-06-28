@@ -2,7 +2,7 @@
 
 个人博客系统，Go + Gin 后端，Vue 3 前端。
 
-[huonji.xyz](https://huonji.xyz)
+[kuonji.xyz](https://kuonji.xyz)
 
 ## 技术栈
 

@@ -10,9 +10,9 @@ COPY . .
 RUN npm run build
 
 # Stage 2: serve
-FROM nginx:alpine
+FROM caddy:alpine
 
-COPY --from=builder /src/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /src/dist /usr/share/caddy
+COPY Caddyfile /etc/caddy/Caddyfile
 
-EXPOSE 80
+EXPOSE 80 443

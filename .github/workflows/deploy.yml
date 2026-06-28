@@ -77,8 +77,16 @@ jobs:
                 restart: unless-stopped
                 ports:
                   - "80:80"
+                  - "443:443"
+                volumes:
+                  - caddy_data:/data
+                  - caddy_config:/config
                 depends_on:
                   - backend
+
+            volumes:
+              caddy_data:
+              caddy_config:
             COMPOSE
             
             sed -i "s/__OWNER_PLACEHOLDER__/$OWNER/g" /root/docker/kuonji/docker-compose.yml

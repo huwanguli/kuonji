@@ -2,6 +2,7 @@ services:
   backend:
     build:
       context: ./backend
+    image: kuonji-backend:latest
     container_name: kuonji-backend
     restart: unless-stopped
     ports:
@@ -23,10 +24,19 @@ services:
   frontend:
     build:
       context: ./frontend
+    image: kuonji-frontend:latest
     container_name: kuonji-frontend
     restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
     depends_on:
       - backend
+
+volumes:
+  caddy_data:
+  caddy_config:
 
