@@ -33,7 +33,7 @@
 创建数据库：
 
 ```sql
-CREATE DATABASE kuonji CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE zblog CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 ### 2. 后端
