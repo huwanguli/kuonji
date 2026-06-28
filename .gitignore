@@ -1,0 +1,22 @@
+/.agents
+/docs
+/docker
+/backend/config/config.yaml
+/backend/logs
+/backend/uploads
+/backend/backend.exe
+/backend/.env
+
+# Environment (keep .example)
+.env
+
+# Docker image tar
+*.tar
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

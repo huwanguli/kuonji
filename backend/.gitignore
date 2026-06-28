@@ -1,0 +1,10 @@
+logs/
+uploads/*
+!uploads/.gitkeep
+backend.exe
+kuonji
+.env
+
+# IDE
+.vscode/
+.idea/

@@ -1,0 +1,28 @@
+server:
+  port: 8080
+  mode: debug
+
+database:
+  host: 127.0.0.1
+  port: 3306
+  user: root
+  password: ""
+  dbname: zblog
+  charset: utf8mb4
+  max_idle_conns: 10
+  max_open_conns: 100
+
+jwt:
+  secret: ""
+  expire: 24h
+
+log:
+  level: debug
+  file: /logs/zblog.log
+  max_age: 30
+  max_size: 100
+
+upload:
+  path: uploads/
+  max_size: 10
+  allowed_exts: [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"]
