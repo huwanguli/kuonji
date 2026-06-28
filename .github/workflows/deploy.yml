@@ -38,15 +38,16 @@ jobs:
 
       - name: Deploy to server
         uses: appleboy/ssh-action@v1
+        env:
+          OWNER: ${{ github.repository_owner }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_SSH_PASSWORD }}
-          env: |
-            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
-            OWNER=${{ github.repository_owner }}
+          envs: OWNER,GH_TOKEN
           script: |
-            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$OWNER" --password-stdin
+            echo "$GH_TOKEN" | docker login ghcr.io -u "$OWNER" --password-stdin
             
             cat > /root/docker/kuonji/docker-compose.yml << 'COMPOSE'
             services:
