@@ -16,7 +16,7 @@ RUN apk add --no-cache ca-certificates tzdata
 ENV TZ=Asia/Shanghai
 
 COPY --from=builder /kuonji /kuonji
-COPY config/config.yaml /config/config.yaml
+COPY config/config.example.yaml /config/config.yaml
 
 RUN mkdir -p /uploads /logs
 
