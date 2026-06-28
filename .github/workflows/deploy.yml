@@ -1,0 +1,87 @@
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/kuonji-backend:latest
+
+      - name: Build & push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/kuonji-frontend:latest
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_SSH_PASSWORD }}
+          env: |
+            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+            OWNER=${{ github.repository_owner }}
+          script: |
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$OWNER" --password-stdin
+            
+            cat > /root/docker/kuonji/docker-compose.yml << 'COMPOSE'
+            services:
+              backend:
+                image: ghcr.io/__OWNER_PLACEHOLDER__/kuonji-backend:latest
+                container_name: kuonji-backend
+                restart: unless-stopped
+                ports:
+                  - "8080:8080"
+                volumes:
+                  - ./uploads:/uploads
+                  - ./logs:/logs
+                environment:
+                  - ZBLOG_DATABASE_HOST=${ZBLOG_DATABASE_HOST}
+                  - ZBLOG_DATABASE_PORT=${ZBLOG_DATABASE_PORT:-3306}
+                  - ZBLOG_DATABASE_USER=${ZBLOG_DATABASE_USER:-root}
+                  - ZBLOG_DATABASE_PASSWORD=${ZBLOG_DATABASE_PASSWORD}
+                  - ZBLOG_DATABASE_DBNAME=${ZBLOG_DATABASE_DBNAME:-zblog}
+                  - ZBLOG_JWT_SECRET=${ZBLOG_JWT_SECRET}
+                  - ZBLOG_SERVER_MODE=release
+                  - ZBLOG_LOG_LEVEL=${ZBLOG_LOG_LEVEL:-info}
+                  - ZBLOG_UPLOAD_PATH=/uploads
+
+              frontend:
+                image: ghcr.io/__OWNER_PLACEHOLDER__/kuonji-frontend:latest
+                container_name: kuonji-frontend
+                restart: unless-stopped
+                ports:
+                  - "80:80"
+                depends_on:
+                  - backend
+            COMPOSE
+            
+            sed -i "s/__OWNER_PLACEHOLDER__/$OWNER/g" /root/docker/kuonji/docker-compose.yml
+            
+            cd /root/docker/kuonji
+            docker compose pull
+            docker compose up -d
