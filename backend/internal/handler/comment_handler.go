@@ -44,12 +44,6 @@ func (h *CommentHandler) GetList(c *gin.Context) {
 		c.JSON(http.StatusOK, dto.BadRequest("article_id is required"))
 		return
 	}
-	if query.Page <= 0 {
-		query.Page = 1
-	}
-	if query.PageSize <= 0 {
-		query.PageSize = 20
-	}
 
 	comments, total, err := h.commentService.GetList(&query)
 	if err != nil {
@@ -57,7 +51,10 @@ func (h *CommentHandler) GetList(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, dto.PageResult(comments, total, query.Page, query.PageSize))
+	c.JSON(http.StatusOK, dto.Success(dto.CommentListResponse{
+		List:  comments,
+		Total: total,
+	}))
 }
 
 func (h *CommentHandler) GetAdminList(c *gin.Context) {

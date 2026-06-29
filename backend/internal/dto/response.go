@@ -30,6 +30,11 @@ type ArticleDetail struct {
 	NextInSeries *SeriesLink `json:"next_in_series,omitempty"`
 }
 
+type CommentListResponse struct {
+	List  interface{} `json:"list"`
+	Total int64       `json:"total"`
+}
+
 func Success(data interface{}) *Response {
 	return &Response{Code: 200, Message: "success", Data: data}
 }

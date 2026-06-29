@@ -47,20 +47,7 @@ func (r *commentRepository) FindList(query *dto.CommentListQuery) ([]model.Comme
 		return nil, 0, err
 	}
 
-	page := query.Page
-	pageSize := query.PageSize
-	if page <= 0 {
-		page = 1
-	}
-	if pageSize <= 0 {
-		pageSize = 20
-	}
-	offset := (page - 1) * pageSize
-
-	err := db.Order("created_at ASC").Preload("Replies", func(db *gorm.DB) *gorm.DB {
-		return db.Where("status = 1").Order("created_at ASC")
-	}).Where("parent_id IS NULL").Offset(offset).Limit(pageSize).Find(&comments).Error
-
+	err := db.Order("created_at ASC").Find(&comments).Error
 	return comments, total, err
 }
 

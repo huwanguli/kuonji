@@ -261,7 +261,7 @@ async function publish(status) {
     }
     if (res.code === 200) {
       saveMsg.value = status === 1 ? '已发布！' : '草稿已保存！'
-      if (!isEdit.value) {
+      if (status === 1 && res.data?.slug) {
         setTimeout(() => router.push(`/article/${res.data.slug}`), 800)
       }
     } else {

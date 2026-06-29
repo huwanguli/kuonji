@@ -52,7 +52,7 @@
           <router-link to="/" class="back-link">&larr; 返回首页</router-link>
         </nav>
 
-        <CommentList :comments="comments" :total="commentTotal" />
+        <CommentList :comments="comments" :total="commentTotal" :article-id="article.id" @posted="fetchComments" />
         <CommentForm :article-id="article.id" @posted="fetchComments" />
 
         <section v-if="relatedArticles.length" class="related-section">

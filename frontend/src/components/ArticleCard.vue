@@ -1,39 +1,31 @@
 <template>
   <article :class="['card', { 'card-announcement': article.is_announcement }]">
-    <div :class="['card-body', { 'has-cover': article.cover }]">
-      <router-link v-if="article.cover" :to="`/article/${article.slug}`" class="card-cover">
-        <img :src="article.cover" :alt="article.title" loading="lazy" />
-      </router-link>
-
-      <div class="card-text">
-        <div class="card-meta">
-          <span v-if="article.is_announcement" class="card-badge">公告</span>
-          <router-link
-            v-else-if="article.category"
-            :to="`/?category_id=${article.category.id}`"
-            class="card-category"
-          >{{ article.category.name }}</router-link>
-          <time :datetime="article.created_at" class="card-date">{{ formatDate(article.created_at) }}</time>
-        </div>
-        <router-link :to="`/article/${article.slug}`" class="card-link">
-          <h2 class="card-title">{{ article.title }}</h2>
-          <p class="card-excerpt" v-if="article.excerpt">{{ article.excerpt }}</p>
-          <p class="card-excerpt" v-else>{{ stripHtml(article.content_html) }}</p>
-        </router-link>
-        <div class="card-footer">
-          <div class="card-tags" v-if="article.tags && article.tags.length && !article.is_announcement">
-            <router-link
-              v-for="tag in article.tags"
-              :key="tag.id"
-              :to="`/?tag_id=${tag.id}`"
-              class="chip"
-            >{{ tag.name }}</router-link>
-          </div>
-          <router-link :to="`/article/${article.slug}`" class="card-read">
-            阅读全文 &rarr;
-          </router-link>
-        </div>
+    <div class="card-meta">
+      <span v-if="article.is_announcement" class="card-badge">公告</span>
+      <router-link
+        v-else-if="article.category"
+        :to="`/?category_id=${article.category.id}`"
+        class="card-category"
+      >{{ article.category.name }}</router-link>
+      <time :datetime="article.created_at" class="card-date">{{ formatDate(article.created_at) }}</time>
+    </div>
+    <router-link :to="`/article/${article.slug}`" class="card-link">
+      <h2 class="card-title">{{ article.title }}</h2>
+      <p class="card-excerpt" v-if="article.excerpt">{{ article.excerpt }}</p>
+      <p class="card-excerpt" v-else>{{ stripHtml(article.content_html) }}</p>
+    </router-link>
+    <div class="card-footer">
+      <div class="card-tags" v-if="article.tags && article.tags.length && !article.is_announcement">
+        <router-link
+          v-for="tag in article.tags"
+          :key="tag.id"
+          :to="`/?tag_id=${tag.id}`"
+          class="chip"
+        >{{ tag.name }}</router-link>
       </div>
+      <router-link :to="`/article/${article.slug}`" class="card-read">
+        阅读全文 &rarr;
+      </router-link>
     </div>
   </article>
 </template>
@@ -63,6 +55,7 @@ function stripHtml(html) {
   padding: var(--space-6);
   margin-bottom: var(--space-6);
   transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
+  position: relative;
 }
 
 .card:hover {
@@ -75,44 +68,6 @@ function stripHtml(html) {
   border-left: 3px solid var(--color-vermilion);
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
-}
-
-.card-body {
-  display: flex;
-  gap: var(--space-5);
-  align-items: flex-start;
-}
-
-.card-body.has-cover {
-  align-items: stretch;
-}
-
-.card-cover {
-  flex-shrink: 0;
-  width: 180px;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  line-height: 0;
-}
-
-.card-cover img {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-  display: block;
-  margin: 0;
-  transition: transform var(--duration) var(--ease);
-}
-
-.card-cover:hover img {
-  transform: scale(1.05);
-}
-
-.card-text {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
 }
 
 .card-meta {
@@ -185,8 +140,7 @@ function stripHtml(html) {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  margin-top: auto;
-  padding-top: var(--space-3);
+  margin-top: var(--space-4);
   gap: var(--space-4);
 }
 
@@ -226,23 +180,10 @@ function stripHtml(html) {
   opacity: 0.7;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 500px) {
   .card {
     padding: var(--space-4);
     margin-bottom: var(--space-4);
-  }
-
-  .card-body.has-cover {
-    flex-direction: column;
-  }
-
-  .card-cover {
-    width: 100%;
-    border-radius: var(--radius-sm);
-  }
-
-  .card-cover img {
-    height: 180px;
   }
 
   .card-footer {
