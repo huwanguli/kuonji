@@ -11,7 +11,7 @@ type CommentRepository interface {
 	Create(comment *model.Comment) error
 	FindByID(id uint) (*model.Comment, error)
 	FindList(query *dto.CommentListQuery) ([]model.Comment, int64, error)
-	FindAllForAdmin(page, pageSize int, status *int) ([]model.Comment, int64, error)
+	FindAllForAdmin(page, pageSize int, status *int, articleID uint) ([]model.Comment, int64, error)
 	UpdateStatus(id uint, status int) error
 	Delete(id uint) error
 }
@@ -51,13 +51,16 @@ func (r *commentRepository) FindList(query *dto.CommentListQuery) ([]model.Comme
 	return comments, total, err
 }
 
-func (r *commentRepository) FindAllForAdmin(page, pageSize int, status *int) ([]model.Comment, int64, error) {
+func (r *commentRepository) FindAllForAdmin(page, pageSize int, status *int, articleID uint) ([]model.Comment, int64, error) {
 	var comments []model.Comment
 	var total int64
 
 	db := r.db.Model(&model.Comment{})
 	if status != nil {
 		db = db.Where("status = ?", *status)
+	}
+	if articleID > 0 {
+		db = db.Where("article_id = ?", articleID)
 	}
 
 	if err := db.Count(&total).Error; err != nil {

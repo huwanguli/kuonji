@@ -12,7 +12,7 @@
         <time :datetime="c.created_at" class="comment-time">{{ formatDate(c.created_at) }}</time>
       </div>
       <p class="comment-body">
-        <span v-if="c._parentAuthor" class="reply-to-inline">回复 @{{ c._parentAuthor }}：</span>{{ c.content }}
+        <span v-if="c.parent_author" class="reply-to-inline">回复 @{{ c.parent_author }}：</span>{{ c.content }}
       </p>
       <a class="comment-reply" href="#" @click.prevent="toggleReply(c.id, c.author)">回复</a>
 
@@ -72,15 +72,7 @@ function flattenTree(nodes, depth) {
 
 const flatList = computed(() => {
   const tree = buildTree(props.comments)
-  const flat = flattenTree(tree, 0)
-  const nameMap = {}
-  for (const c of flat) nameMap[c.id] = c.author
-  for (const c of flat) {
-    if (c.parent_id && nameMap[c.parent_id]) {
-      c._parentAuthor = nameMap[c.parent_id]
-    }
-  }
-  return flat
+  return flattenTree(tree, 0)
 })
 
 const replyTarget = ref(null)

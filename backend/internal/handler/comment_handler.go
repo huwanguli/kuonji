@@ -64,8 +64,9 @@ func (h *CommentHandler) GetAdminList(c *gin.Context) {
 	if s, err := strconv.Atoi(c.Query("status")); err == nil {
 		status = &s
 	}
+	articleID, _ := strconv.ParseUint(c.DefaultQuery("article_id", "0"), 10, 64)
 
-	comments, total, err := h.commentService.GetAllForAdmin(page, pageSize, status)
+	comments, total, err := h.commentService.GetAllForAdmin(page, pageSize, status, uint(articleID))
 	if err != nil {
 		c.JSON(http.StatusOK, dto.InternalError(err.Error()))
 		return

@@ -6,7 +6,17 @@ const api = axios.create({
 })
 
 api.interceptors.response.use(
-  (res) => res.data,
+  (res) => {
+    if (res.data && res.data.code === 401) {
+      localStorage.removeItem('token')
+      if (!window._zb_401_redirecting) {
+        window._zb_401_redirecting = true
+        window.location.href = '/admin?expired=1'
+      }
+      return Promise.reject(new Error('token expired'))
+    }
+    return res.data
+  },
   (err) => Promise.reject(err)
 )
 
@@ -112,6 +122,6 @@ export const upload = {
   image(file) {
     const fd = new FormData()
     fd.append('file', file)
-    return api.post('/admin/upload', fd, { headers: { ...authHeader(), 'Content-Type': 'multipart/form-data' } })
+     return api.post('/admin/upload', fd, { headers: authHeader() })
   },
 }

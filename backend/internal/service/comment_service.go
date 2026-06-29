@@ -13,7 +13,7 @@ import (
 type CommentService interface {
 	Create(req *dto.CreateCommentRequest, ip string) (*model.Comment, error)
 	GetList(query *dto.CommentListQuery) ([]model.Comment, int64, error)
-	GetAllForAdmin(page, pageSize int, status *int) ([]model.Comment, int64, error)
+	GetAllForAdmin(page, pageSize int, status *int, articleID uint) ([]model.Comment, int64, error)
 	UpdateStatus(id uint, status int) error
 	Delete(id uint) error
 }
@@ -46,6 +46,13 @@ func (s *commentService) Create(req *dto.CreateCommentRequest, ip string) (*mode
 		IP:        ip,
 	}
 
+	if req.ParentID != nil {
+		parent, err := s.commentRepo.FindByID(*req.ParentID)
+		if err == nil {
+			comment.ParentAuthor = parent.Author
+		}
+	}
+
 	if err := s.commentRepo.Create(comment); err != nil {
 		return nil, err
 	}
@@ -61,8 +68,8 @@ func (s *commentService) GetList(query *dto.CommentListQuery) ([]model.Comment, 
 	return s.commentRepo.FindList(query)
 }
 
-func (s *commentService) GetAllForAdmin(page, pageSize int, status *int) ([]model.Comment, int64, error) {
-	return s.commentRepo.FindAllForAdmin(page, pageSize, status)
+func (s *commentService) GetAllForAdmin(page, pageSize int, status *int, articleID uint) ([]model.Comment, int64, error) {
+	return s.commentRepo.FindAllForAdmin(page, pageSize, status, articleID)
 }
 
 func (s *commentService) UpdateStatus(id uint, status int) error {

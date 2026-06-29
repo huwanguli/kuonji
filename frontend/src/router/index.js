@@ -22,6 +22,11 @@ const routes = [
     component: () => import('../views/AdminArticles.vue'),
   },
   {
+    path: '/admin/comments',
+    name: 'admin-comments',
+    component: () => import('../views/AdminComments.vue'),
+  },
+  {
     path: '/editor',
     name: 'editor',
     component: () => import('../views/EditorView.vue'),

@@ -37,7 +37,7 @@ const isAdminPage = computed(() => {
 
 function logout() {
   localStorage.removeItem('token')
-  router.push('/')
+  router.push('/admin')
 }
 </script>
 

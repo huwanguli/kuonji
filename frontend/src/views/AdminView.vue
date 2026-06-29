@@ -3,6 +3,7 @@
 
     <div v-if="!isLoggedIn">
       <h2 class="admin-title">管理员登录</h2>
+      <p v-if="expiredMsg" class="expired-hint">{{ expiredMsg }}</p>
       <form @submit.prevent="login" class="login-form">
         <input v-model="username" type="text" placeholder="用户名" required class="input" />
         <input v-model="password" type="password" placeholder="密码" required class="input" />
@@ -25,6 +26,11 @@
           <span class="quick-icon">&#9776;</span>
           <span class="quick-label">文章管理</span>
           <span class="quick-stat">{{ stats.articles }} 篇</span>
+        </router-link>
+        <router-link to="/admin/comments" class="quick-card">
+          <span class="quick-icon">&#9993;</span>
+          <span class="quick-label">评论管理</span>
+          <span class="quick-stat">{{ stats.comments }} 条</span>
         </router-link>
       </div>
 
@@ -63,19 +69,22 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { auth, categories as catApi, tags as tagApi, articles as articleApi } from '../api'
+import { useRoute } from 'vue-router'
+import { auth, categories as catApi, tags as tagApi, articles as articleApi, comments as commentsApi } from '../api'
 
+const route = useRoute()
 const username = ref('')
 const password = ref('')
 const submitting = ref(false)
 const error = ref('')
+const expiredMsg = ref(route.query.expired === '1' ? '登录已过期，请重新登录' : '')
 const isLoggedIn = ref(false)
 
 const adminCategories = ref([])
 const adminTags = ref([])
 const newCat = reactive({ name: '' })
 const newTag = reactive({ name: '' })
-const stats = reactive({ articles: 0 })
+const stats = reactive({ articles: 0, comments: 0 })
 
 async function login() {
   submitting.value = true
@@ -103,14 +112,16 @@ function logout() {
 
 async function loadDashboard() {
   try {
-    const [catRes, tagRes, articleRes] = await Promise.all([
+    const [catRes, tagRes, articleRes, commentRes] = await Promise.all([
       catApi.list(),
       tagApi.list(),
       articleApi.adminList({ page: 1, page_size: 1 }),
+      commentsApi.adminList({ page: 1, page_size: 1 }),
     ])
     if (catRes.code === 200) adminCategories.value = catRes.data || []
     if (tagRes.code === 200) adminTags.value = tagRes.data || []
     if (articleRes.code === 200) stats.articles = articleRes.data.total || 0
+    if (commentRes.code === 200) stats.comments = commentRes.data.total || 0
   } catch {}
 }
 
@@ -207,13 +218,14 @@ onMounted(() => {
 .login-btn:hover:not(:disabled) { opacity: 0.85; }
 .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .error { font-size: var(--text-sm); color: var(--color-vermilion); }
+.expired-hint { font-size: var(--text-sm); color: #b45309; margin-bottom: var(--space-4); padding: var(--space-2) var(--space-3); background: #fef3c7; border-radius: var(--radius-sm); }
 
 /* Dashboard */
 .quick-links {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--space-4);
-  max-width: 500px;
+  max-width: 600px;
   margin-bottom: var(--space-8);
 }
 
