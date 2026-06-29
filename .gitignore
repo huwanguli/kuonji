@@ -6,6 +6,7 @@
 /backend/uploads
 /backend/backend.exe
 /backend/.env
+/backend/tools
 
 # Environment (keep .example)
 .env

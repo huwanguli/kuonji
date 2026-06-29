@@ -80,16 +80,16 @@ async function submit() {
 
 <style scoped>
 .comment-form {
-  margin-top: var(--space-12);
-  padding: var(--space-6);
-  background: var(--color-card);
+  margin-top: var(--space-8);
+  padding: 0;
   border-radius: var(--radius);
 }
 
 .form-title {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: var(--text-lg);
-  margin-bottom: var(--space-4);
+  font-weight: 600;
+  margin-bottom: var(--space-3);
   color: var(--color-deep);
 }
 
@@ -113,7 +113,7 @@ async function submit() {
   padding: var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background: var(--color-paper);
+  background: var(--color-surface);
   color: var(--color-ink);
   outline: none;
   transition: border-color var(--duration) var(--ease);

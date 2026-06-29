@@ -146,8 +146,9 @@ function formatDate(dateStr) {
 }
 
 .comment-heading {
-  font-family: var(--font-display);
-  font-size: var(--text-xl);
+  font-family: var(--font-body);
+  font-size: var(--text-lg);
+  font-weight: 600;
   margin: 0 0 var(--space-6);
   color: var(--color-deep);
 }
@@ -204,8 +205,8 @@ function formatDate(dateStr) {
 .reply-inline {
   margin-top: var(--space-2);
   padding: var(--space-3);
-  background: var(--color-card);
   border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-vermilion);
 }
 
 .reply-label {
@@ -228,7 +229,7 @@ function formatDate(dateStr) {
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background: var(--color-paper);
+  background: var(--color-surface);
   color: var(--color-ink);
   outline: none;
   flex: 1;
@@ -245,7 +246,7 @@ function formatDate(dateStr) {
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background: var(--color-paper);
+  background: var(--color-surface);
   color: var(--color-ink);
   outline: none;
   width: 100%;

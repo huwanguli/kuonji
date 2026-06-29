@@ -52,8 +52,8 @@
           <router-link to="/" class="back-link">&larr; 返回首页</router-link>
         </nav>
 
-        <CommentList :comments="comments" :total="commentTotal" :article-id="article.id" @posted="fetchComments" />
         <CommentForm :article-id="article.id" @posted="fetchComments" />
+        <CommentList :comments="comments" :total="commentTotal" :article-id="article.id" @posted="fetchComments" />
 
         <section v-if="relatedArticles.length" class="related-section">
           <h3 class="related-title">相关文章</h3>
@@ -151,7 +151,7 @@ onMounted(fetchArticle)
 <style scoped>
 .page-layout {
   display: grid;
-  grid-template-columns: 180px 1fr;
+  grid-template-columns: 200px 1fr;
   gap: var(--space-10);
   padding-top: var(--space-8);
   padding-bottom: var(--space-20);
@@ -251,6 +251,14 @@ time,
 .chip:hover {
   color: var(--color-ink);
   border-color: var(--color-border);
+}
+
+.article-content-wrapper {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-card);
 }
 
 /* Content */

@@ -49,13 +49,14 @@ function stripHtml(html) {
 
 <style scoped>
 .card {
-  background: var(--color-paper);
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   padding: var(--space-6);
   margin-bottom: var(--space-6);
   transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
   position: relative;
+  box-shadow: var(--shadow-card);
 }
 
 .card:hover {
@@ -64,7 +65,7 @@ function stripHtml(html) {
 }
 
 .card-announcement {
-  background: #fefaf3;
+  background: var(--color-highlight);
   border-left: 3px solid var(--color-vermilion);
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;

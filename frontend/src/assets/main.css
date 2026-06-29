@@ -9,6 +9,10 @@
   --color-card: #f5f3ee;
   --color-border: #d1cdc6;
   --color-muted: #8a8780;
+  --color-surface: #fefefe;
+  --color-highlight: #fefaf3;
+  --color-navbar-bg: rgba(253, 251, 247, 0.85);
+  --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.04);
 
   /* Typography */
   --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
@@ -33,14 +37,13 @@
   --space-4: 1rem;
   --space-6: 1.5rem;
   --space-8: 2rem;
-  --space-10: 2.5rem;
   --space-12: 3rem;
   --space-16: 4rem;
   --space-20: 5rem;
 
   /* Layout */
   --max-width: 720px;
-  --max-width-wide: 1024px;
+  --max-width-wide: 1200px;
   --navbar-height: 56px;
   --radius-sm: 4px;
   --radius: 8px;
@@ -48,6 +51,20 @@
   /* Transitions */
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --duration: 200ms;
+}
+
+html[data-theme="dark"] {
+  --color-paper: #1b1b2f;
+  --color-ink: #cdd6e0;
+  --color-vermilion: #f07178;
+  --color-deep: #a5b8e8;
+  --color-card: #242440;
+  --color-border: #3a3a55;
+  --color-muted: #7f8ca0;
+  --color-surface: #242440;
+  --color-highlight: #2e2e4a;
+  --color-navbar-bg: rgba(27, 27, 47, 0.88);
+  --shadow-card: 0 1px 6px rgba(0, 0, 0, 0.25);
 }
 
 /* Reset */
