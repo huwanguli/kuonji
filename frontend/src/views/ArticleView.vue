@@ -8,6 +8,10 @@
           <router-link to="/" class="back-link">&larr; 返回首页</router-link>
         </nav>
 
+        <div class="article-cover" v-if="article.cover">
+          <img :src="article.cover" :alt="article.title" />
+        </div>
+
         <header class="article-header">
           <div class="article-meta">
             <router-link
@@ -28,10 +32,6 @@
             >{{ tag.name }}</router-link>
           </div>
         </header>
-
-        <div class="article-cover" v-if="article.cover">
-          <img :src="article.cover" :alt="article.title" />
-        </div>
 
         <div class="article-content" v-html="article.content_html"></div>
 
