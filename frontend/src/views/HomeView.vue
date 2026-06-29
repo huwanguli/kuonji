@@ -182,7 +182,7 @@ onMounted(() => {
 <style scoped>
 .page-layout {
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: 180px 1fr;
   gap: var(--space-10);
   padding-top: var(--space-8);
   padding-bottom: var(--space-16);

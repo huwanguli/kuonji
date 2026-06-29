@@ -101,7 +101,6 @@ kuonji/
 │       │   ├── NavBar.vue         # 导航栏（访客/管理员自适应）
 │       │   ├── Footer.vue         # 页脚
 │       │   ├── Sidebar.vue        # 侧边栏（分类/系列/标签/目录）
-│       │   ├── AnnouncementBanner.vue  # 公告横幅
 │       │   ├── ArticleCard.vue    # 文章卡片
 │       │   ├── ArticleList.vue    # 文章列表 + 分页
 │       │   ├── CommentList.vue    # 评论列表
@@ -111,6 +110,7 @@ kuonji/
 │           ├── ArticleView.vue    # 文章详情
 │           ├── AdminView.vue      # 管理面板
 │           ├── AdminArticles.vue  # 文章管理列表
+│           ├── AdminComments.vue  # 评论管理
 │           └── EditorView.vue     # Markdown 编辑器
 ├── docker-compose.yml             # 容器编排
 └── .env.example                   # 环境变量模板
@@ -203,11 +203,12 @@ upload:
 
 | 路径 | 名称 | 说明 |
 |------|------|------|
-| `/` | 首页 | 公告横幅 + 随机标语 + 文章列表 + 侧边栏 |
-| `/article/:slug` | 文章详情 | 正文 + 目录 + 评论 + 相关文章 |
+| `/` | 首页 | 随机标语 + 文章列表（支持分类/标签/系列筛选）+ 侧边栏 |
+| `/article/:slug` | 文章详情 | 封面图 + 正文 + 目录 + 评论 |
 | `/admin` | 管理面板 | 登录 + 分类/标签管理 |
-| `/admin/articles` | 文章管理 | 列表/筛选/编辑/删除 |
-| `/editor` | 写文章 | Markdown 分栏编辑器 + 图片上传 |
+| `/admin/articles` | 文章管理 | 列表/筛选/编辑/删除 + 文章评论管理 |
+| `/admin/comments` | 评论管理 | 全部评论审核/删除/恢复 |
+| `/editor` | 写文章 | Markdown 预览编辑器 + 封面/图片上传 |
 | `/editor/:id` | 编辑文章 | 同上 |
 
 导航栏在 `/admin*` 和 `/editor*` 路径下自动切换为管理导航，其余路径显示访客导航。
