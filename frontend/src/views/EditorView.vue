@@ -24,7 +24,19 @@
       <div class="meta-row">
         <input v-model="form.slug" type="text" placeholder="slug（留空自动生成）" class="input" />
         <input v-model="form.excerpt" type="text" placeholder="摘要（选填）" class="input" />
-        <input v-model="form.cover" type="text" placeholder="封面图 URL（选填）" class="input" />
+        <div class="cover-input-wrap">
+          <input v-model="form.cover" type="text" placeholder="封面图 URL（选填）" class="input cover-input" />
+          <button class="cover-upload-btn" @click="uploadCoverTrigger" title="上传封面图">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </button>
+          <input
+            ref="coverFileInput"
+            type="file"
+            accept=".jpg,.jpeg,.png,.gif,.webp"
+            class="file-hidden"
+            @change="handleCoverFileSelect"
+          />
+        </div>
       </div>
 
       <div class="taxonomy-row">
@@ -50,7 +62,7 @@
           <div class="option-checkboxes">
             <label class="tag-checkbox">
               <input type="checkbox" v-model="form.is_announcement" :true-value="1" :false-value="0" />
-              <span>设为公告（全站横幅 + 文章列表置顶）</span>
+              <span>设为公告（置顶卡片样式）</span>
             </label>
           </div>
         </div>
@@ -139,6 +151,7 @@ const saving = ref(false)
 const saveMsg = ref('')
 const textareaRef = ref(null)
 const fileInput = ref(null)
+const coverFileInput = ref(null)
 const imgPicker = ref({ visible: false, style: {}, src: '' })
 
 function onPreviewClick(e) {
@@ -329,9 +342,32 @@ function uploadTrigger() {
   fileInput.value?.click()
 }
 
+function uploadCoverTrigger() {
+  coverFileInput.value?.click()
+}
+
 function handleFileSelect(e) {
   const file = e.target.files?.[0]
   if (file) uploadFile(file)
+  e.target.value = ''
+}
+
+async function handleCoverFileSelect(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  saveMsg.value = '封面上传中...'
+  try {
+    const res = await uploadApi.image(file)
+    if (res.code === 200 && res.data) {
+      form.value.cover = res.data.url
+      saveMsg.value = '封面已上传！'
+      setTimeout(() => { if (saveMsg.value === '封面已上传！') saveMsg.value = '' }, 2000)
+    } else {
+      saveMsg.value = '上传失败'
+    }
+  } catch {
+    saveMsg.value = '上传失败，请重试。'
+  }
   e.target.value = ''
 }
 
@@ -429,6 +465,36 @@ onMounted(() => {
 .meta-row .input {
   flex: 1;
   min-width: 200px;
+}
+
+.cover-input-wrap {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  gap: 2px;
+}
+
+.cover-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.cover-upload-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-3);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--color-muted);
+  transition: all var(--duration) var(--ease);
+}
+
+.cover-upload-btn:hover {
+  color: var(--color-vermilion);
+  border-color: var(--color-vermilion);
 }
 
 /* Taxonomy */

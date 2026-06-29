@@ -29,6 +29,10 @@
           </div>
         </header>
 
+        <div class="article-cover" v-if="article.cover">
+          <img :src="article.cover" :alt="article.title" />
+        </div>
+
         <div class="article-content" v-html="article.content_html"></div>
 
         <nav v-if="prevArticle || nextArticle" class="series-nav">
@@ -250,6 +254,20 @@ time,
 }
 
 /* Content */
+.article-cover {
+  margin-bottom: var(--space-8);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.article-cover img {
+  width: 100%;
+  max-height: 480px;
+  object-fit: cover;
+  display: block;
+  margin: 0;
+}
+
 .article-content {
   font-size: var(--text-lg);
   line-height: 1.85;

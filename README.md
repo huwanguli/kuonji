@@ -88,8 +88,8 @@ kuonji/
 │       ├── dto/                   # 请求/响应结构体
 │       └── utils/                 # 工具 (slug/MD/JWT)
 ├── frontend/
-│   ├── Dockerfile                 # 前端镜像
-│   ├── nginx.conf                 # Nginx 配置（SPA + 反代）
+│   ├── Dockerfile                 # 前端镜像（Caddy 自动 HTTPS）
+│   ├── Caddyfile                  # Caddy 配置（SPA + 反代 + 自动证书）
 │   └── src/
 │       ├── main.js                # 入口
 │       ├── App.vue                # 根组件
@@ -265,7 +265,7 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-架构：`nginx:80` → 静态前端 + 反代 `/api` `/uploads` → `backend:8080` → MySQL。
+架构：`Caddy :80/:443` → 自动 Let's Encrypt HTTPS + 静态前端 + 反代 `/api` `/uploads` → `backend:8080` → MySQL。
 
 ### 手动部署
 
@@ -276,5 +276,5 @@ cd frontend && npm run build     # 输出到 dist/
 # 构建后端
 cd backend && go build -o kuonji .
 
-# 部署：Nginx 将 / 指向 frontend/dist/，/api /uploads 反代到后端 8080 端口
+# 部署：Caddy 将 / 指向 frontend/dist/，/api /uploads 反代到后端 8080，自动获取 Let's Encrypt 证书
 ```

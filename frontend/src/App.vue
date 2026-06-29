@@ -1,7 +1,6 @@
 <template>
   <div class="app">
     <NavBar />
-    <AnnouncementBanner />
     <main class="main">
       <router-view v-slot="{ Component }">
         <transition name="page" mode="out-in">
@@ -15,7 +14,6 @@
 
 <script setup>
 import NavBar from './components/NavBar.vue'
-import AnnouncementBanner from './components/AnnouncementBanner.vue'
 import Footer from './components/Footer.vue'
 </script>
 

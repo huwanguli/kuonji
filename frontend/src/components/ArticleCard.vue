@@ -1,8 +1,15 @@
 <template>
-  <article class="card">
+  <article :class="['card', { 'card-announcement': article.is_announcement }]">
+    <div class="card-cover" v-if="article.cover">
+      <router-link :to="`/article/${article.slug}`">
+        <img :src="article.cover" :alt="article.title" loading="lazy" />
+      </router-link>
+    </div>
+
     <div class="card-meta">
+      <span v-if="article.is_announcement" class="card-badge">公告</span>
       <router-link
-        v-if="article.category"
+        v-else-if="article.category"
         :to="`/?category_id=${article.category.id}`"
         class="card-category"
       >{{ article.category.name }}</router-link>
@@ -14,7 +21,7 @@
       <p class="card-excerpt" v-else>{{ stripHtml(article.content_html) }}</p>
     </router-link>
     <div class="card-footer">
-      <div class="card-tags" v-if="article.tags && article.tags.length">
+      <div class="card-tags" v-if="article.tags && article.tags.length && !article.is_announcement">
         <router-link
           v-for="tag in article.tags"
           :key="tag.id"
@@ -62,6 +69,36 @@ function stripHtml(html) {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
+.card-announcement {
+  background: #fefaf3;
+  border-left: 3px solid var(--color-vermilion);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.card-cover {
+  margin: calc(-1 * var(--space-6)) calc(-1 * var(--space-6)) var(--space-4);
+  border-radius: var(--radius) var(--radius) 0 0;
+  overflow: hidden;
+}
+
+.card-announcement .card-cover {
+  margin-top: calc(-1 * var(--space-6));
+  margin-left: calc(-1 * var(--space-6) - 3px);
+}
+
+.card-cover a {
+  display: block;
+  line-height: 0;
+}
+
+.card-cover img {
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  margin: 0;
+}
+
 .card-meta {
   display: flex;
   align-items: center;
@@ -81,6 +118,15 @@ function stripHtml(html) {
 
 .card-category:hover {
   opacity: 0.7;
+}
+
+.card-badge {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-vermilion);
+  padding: 1px 10px;
+  border-radius: 100px;
 }
 
 .card-date {
@@ -167,6 +213,10 @@ function stripHtml(html) {
   .card {
     padding: var(--space-4);
     margin-bottom: var(--space-4);
+  }
+
+  .card-cover {
+    margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) var(--space-4);
   }
 
   .card-footer {
