@@ -9,6 +9,7 @@
     <div class="filter-row">
       <button :class="['filter-btn', { active: statusFilter === null }]" @click="setFilter(null)">全部</button>
       <button :class="['filter-btn', { active: statusFilter === 1 }]" @click="setFilter(1)">已发布</button>
+      <button :class="['filter-btn', { active: statusFilter === 2 }]" @click="setFilter(2)">私密</button>
       <button :class="['filter-btn', { active: statusFilter === 0 }]" @click="setFilter(0)">草稿</button>
     </div>
 
@@ -18,10 +19,10 @@
       <div v-for="a in articles" :key="a.id" class="table-group">
         <div class="table-row">
           <div class="row-main">
-            <span :class="['status-dot', a.status === 1 ? 'published' : 'draft']"></span>
-            <router-link :to="`/editor/${a.id}`" class="row-title">{{ a.title }}</router-link>
+            <span :class="['status-dot', a.status === 1 ? 'published' : a.status === 2 ? 'private' : 'draft']"></span>
+            <router-link :to="`/admin/articles/view/${a.id}`" class="row-title">{{ a.title }}</router-link>
             <span class="row-meta">{{ formatDate(a.created_at) }}</span>
-            <span class="row-views" v-if="a.status === 1">{{ a.view_count }} 阅读</span>
+            <span class="row-views" v-if="a.status !== 0">{{ a.view_count }} 阅读</span>
           </div>
           <div class="row-actions">
             <button @click="toggleComments(a)" class="row-action">
@@ -325,6 +326,7 @@ onMounted(fetch)
 }
 
 .status-dot.published { background: #16a34a; }
+.status-dot.private { background: var(--color-vermilion); }
 .status-dot.draft { background: var(--color-muted); }
 
 .row-title {

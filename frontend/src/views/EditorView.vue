@@ -4,6 +4,7 @@
         <h2 class="editor-title">{{ isEdit ? '编辑文章' : '写新文章' }}</h2>
         <div class="editor-actions">
           <button @click="publish(0)" class="btn-draft" :disabled="saving">存草稿</button>
+          <button @click="publish(2)" class="btn-private" :disabled="saving">私密</button>
           <button @click="publish(1)" class="btn-publish" :disabled="saving">发布</button>
         </div>
       </div>
@@ -260,7 +261,11 @@ async function publish(status) {
       res = await api.create(form.value)
     }
     if (res.code === 200) {
-      saveMsg.value = status === 1 ? '已发布！' : '草稿已保存！'
+      if (status === 2) {
+        saveMsg.value = '已设为私密！'
+      } else {
+        saveMsg.value = status === 1 ? '已发布！' : '草稿已保存！'
+      }
       if (status === 1 && res.data?.slug) {
         setTimeout(() => router.push(`/article/${res.data.slug}`), 800)
       }
@@ -726,8 +731,24 @@ onMounted(() => {
   border-color: var(--color-vermilion);
 }
 
+.btn-private {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-vermilion);
+  background: var(--color-card);
+  border: 1px solid var(--color-vermilion);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: opacity var(--duration) var(--ease);
+}
+
+.btn-private:hover:not(:disabled) { opacity: 0.85; }
+
 .btn-publish:disabled,
-.btn-draft:disabled {
+.btn-draft:disabled,
+.btn-private:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

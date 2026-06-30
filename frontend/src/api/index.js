@@ -35,6 +35,9 @@ export const articles = {
   adminList(params = {}) {
     return api.get('/admin/articles', { params, headers: authHeader() })
   },
+  adminDetail(id) {
+    return api.get(`/admin/articles/${id}`, { headers: authHeader() })
+  },
   create(data) {
     return api.post('/admin/articles', data, { headers: authHeader() })
   },

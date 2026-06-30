@@ -47,6 +47,7 @@ func Setup(
 			authGroup.GET("/profile", authH.Profile)
 
 			authGroup.GET("/articles", articleH.GetAdminList)
+			authGroup.GET("/articles/:id", articleH.GetAdminDetail)
 			authGroup.POST("/articles", articleH.Create)
 			authGroup.PUT("/articles/:id", articleH.Update)
 			authGroup.DELETE("/articles/:id", articleH.Delete)

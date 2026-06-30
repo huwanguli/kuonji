@@ -273,13 +273,21 @@ Body:
 
 ### 文章管理
 
-#### 列表（含草稿）
+#### 列表（含草稿和私密）
 
 ```
 GET /api/admin/articles
 ```
 
-参数同公开接口的 `/api/articles`，但不过滤 `status`，可查看草稿。
+参数同公开接口的 `/api/articles`，但不过滤 `status`，可查看草稿和私密文章。
+
+#### 文章详情（后台）
+
+```
+GET /api/admin/articles/:id
+```
+
+返回指定 ID 的文章详情（不限制 status），响应格式同公开 `GET /api/articles/:slug` 中的 `article` 字段。
 
 #### 创建文章
 
@@ -310,7 +318,7 @@ POST /api/admin/articles
 | content_md | string | 是 | Markdown 原文 |
 | excerpt | string | 否 | 摘要 |
 | cover | string | 否 | 封面图 URL |
-| status | int | 否 | 0=草稿, 1=发布 |
+| status | int | 否 | 0=草稿, 1=发布, 2=私密 |
 | is_top | int | 否 | 0=普通, 1=置顶 |
 | category_id | int | 否 | 分类 ID |
 | tag_ids | []int | 否 | 标签 ID 数组 |

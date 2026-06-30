@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"zblog-backend/internal/dto"
+	"zblog-backend/internal/model"
 	"zblog-backend/internal/service"
 )
 
@@ -50,7 +51,26 @@ func (h *ArticleHandler) GetBySlug(c *gin.Context) {
 		c.JSON(http.StatusOK, dto.NotFound("article not found"))
 		return
 	}
+	if a, ok := detail.Article.(*model.Article); !ok || a.Status != 1 {
+		c.JSON(http.StatusOK, dto.NotFound("article not found"))
+		return
+	}
 	c.JSON(http.StatusOK, dto.Success(detail))
+}
+
+func (h *ArticleHandler) GetAdminDetail(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, dto.BadRequest("invalid id"))
+		return
+	}
+
+	article, err := h.articleService.GetByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusOK, dto.NotFound("article not found"))
+		return
+	}
+	c.JSON(http.StatusOK, dto.Success(article))
 }
 
 func (h *ArticleHandler) GetSeriesList(c *gin.Context) {

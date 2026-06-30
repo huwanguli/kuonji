@@ -111,6 +111,7 @@ kuonji/
 │           ├── AdminView.vue      # 管理面板
 │           ├── AdminArticles.vue  # 文章管理列表
 │           ├── AdminComments.vue  # 评论管理
+│           ├── AdminArticleView.vue # 文章只读预览（后台）
 │           └── EditorView.vue     # Markdown 编辑器
 ├── docker-compose.yml             # 容器编排
 └── .env.example                   # 环境变量模板
@@ -149,7 +150,7 @@ Model (GORM 模型定义)
 |------|------|------|
 | POST | `/api/admin/login` | 登录 |
 | GET | `/api/admin/profile` | 当前用户 |
-| GET/POST/PUT/DELETE | `/api/admin/articles` | 文章 CRUD |
+| GET/POST/PUT/DELETE | `/api/admin/articles` | 文章 CRUD + 详情（`GET /:id`） |
 | POST/PUT/DELETE | `/api/admin/categories` | 分类管理 |
 | POST/PUT/DELETE | `/api/admin/tags` | 标签管理 |
 | GET/PUT/DELETE | `/api/admin/comments` | 评论审核 |
@@ -206,7 +207,8 @@ upload:
 | `/` | 首页 | 随机标语 + 文章列表（支持分类/标签/系列筛选）+ 侧边栏 |
 | `/article/:slug` | 文章详情 | 封面图 + 正文 + 目录 + 评论 |
 | `/admin` | 管理面板 | 登录 + 分类/标签管理 |
-| `/admin/articles` | 文章管理 | 列表/筛选/编辑/删除 + 文章评论管理 |
+| `/admin/articles` | 文章管理 | 列表/筛选（全部/已发布/私密/草稿）/编辑/删除 + 文章评论管理 |
+| `/admin/articles/view/:id` | 文章预览 | 后台只读文章预览，可跳转编辑 |
 | `/admin/comments` | 评论管理 | 全部评论审核/删除/恢复 |
 | `/editor` | 写文章 | Markdown 预览编辑器 + 封面/图片上传 |
 | `/editor/:id` | 编辑文章 | 同上 |

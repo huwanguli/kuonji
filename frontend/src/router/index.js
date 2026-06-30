@@ -22,6 +22,11 @@ const routes = [
     component: () => import('../views/AdminArticles.vue'),
   },
   {
+    path: '/admin/articles/view/:id',
+    name: 'admin-article-view',
+    component: () => import('../views/AdminArticleView.vue'),
+  },
+  {
     path: '/admin/comments',
     name: 'admin-comments',
     component: () => import('../views/AdminComments.vue'),
