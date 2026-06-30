@@ -47,7 +47,7 @@
               <button
                 v-if="c.status !== 2"
                 class="action-btn action-delete"
-                @click="confirmDelete(c)"
+                @click="updateStatus(c.id, 2)"
               >删除</button>
               <button
                 v-if="c.status === 2"
@@ -65,18 +65,6 @@
         </div>
       </div>
     </div>
-
-    <div v-if="deleteTarget" class="modal-overlay" @click.self="deleteTarget = null">
-      <div class="modal">
-        <p>确认删除这条评论？</p>
-        <p class="delete-preview">"{{ deleteTarget.content }}"</p>
-        <p class="modal-note">子评论不受影响，"回复 @{{ deleteTarget.author }}" 照常显示</p>
-        <div class="modal-actions">
-          <button class="btn-cancel" @click="deleteTarget = null">取消</button>
-          <button class="btn-delete" @click="doDelete">确认删除</button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -90,7 +78,6 @@ const page = ref(1)
 const totalPages = ref(1)
 const loading = ref(true)
 const statusFilter = ref(null)
-const deleteTarget = ref(null)
 
 async function fetchList(p = 1) {
   loading.value = true
@@ -115,19 +102,6 @@ function goPage(p) {
 async function updateStatus(id, status) {
   try {
     await commentsApi.updateStatus(id, status)
-    fetchList(page.value)
-  } catch {}
-}
-
-function confirmDelete(c) {
-  deleteTarget.value = c
-}
-
-async function doDelete() {
-  if (!deleteTarget.value) return
-  try {
-    await commentsApi.delete(deleteTarget.value.id)
-    deleteTarget.value = null
     fetchList(page.value)
   } catch {}
 }
@@ -370,77 +344,5 @@ onMounted(() => {
 .page-info {
   font-size: var(--text-sm);
   color: var(--color-muted);
-}
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-.modal {
-  background: var(--color-paper);
-  border-radius: var(--radius);
-  padding: var(--space-6);
-  max-width: 400px;
-  width: 90%;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-}
-
-.modal p {
-  margin-bottom: var(--space-4);
-  font-size: var(--text-base);
-}
-
-.delete-preview {
-  color: var(--color-muted);
-  font-style: italic;
-  font-size: var(--text-sm);
-}
-
-.modal-note {
-  font-size: var(--text-xs);
-  color: var(--color-muted);
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-3);
-}
-
-.btn-cancel {
-  font-family: var(--font-body);
-  font-size: var(--text-sm);
-  color: var(--color-muted);
-  background: none;
-  border: 1px solid var(--color-border);
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-
-.btn-cancel:hover {
-  border-color: var(--color-muted);
-}
-
-.btn-delete {
-  font-family: var(--font-body);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: #fff;
-  background: var(--color-vermilion);
-  border: none;
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-
-.btn-delete:hover {
-  opacity: 0.85;
 }
 </style>

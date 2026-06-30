@@ -3,6 +3,14 @@
     <div class="editor-header">
         <h2 class="editor-title">{{ isEdit ? '编辑文章' : '写新文章' }}</h2>
         <div class="editor-actions">
+          <button @click="importMdTrigger" class="btn-import" :disabled="saving">导入 .md</button>
+          <input
+            ref="mdFileInput"
+            type="file"
+            accept=".md"
+            class="file-hidden"
+            @change="handleMdImport"
+          />
           <button @click="publish(0)" class="btn-draft" :disabled="saving">存草稿</button>
           <button @click="publish(2)" class="btn-private" :disabled="saving">私密</button>
           <button @click="publish(1)" class="btn-publish" :disabled="saving">发布</button>
@@ -130,6 +138,70 @@
       </div>
 
       <p v-if="saveMsg" :class="['save-msg', saveMsg.includes('失败') ? 'save-error' : '' ]">{{ saveMsg }}</p>
+
+      <section v-if="isEdit && articleId" class="editor-comments">
+        <div class="ec-toolbar">
+          <h3 class="ec-heading">评论管理 ({{ editorCommentTotal }})</h3>
+          <label class="ec-select-all" v-if="editorComments.length">
+            <input type="checkbox" :checked="editorAllSelected" @change="editorToggleAll" />
+            全选
+          </label>
+          <div class="ec-batch-actions" v-if="editorSelectedIds.length">
+            <button @click="editorBatchStatus(1)" class="ec-btn ec-approve">通过 ({{ editorSelectedIds.length }})</button>
+            <button @click="editorBatchStatus(2)" class="ec-btn ec-delete">删除 ({{ editorSelectedIds.length }})</button>
+          </div>
+        </div>
+
+        <div v-if="editorCommentsLoading" class="ec-loading">加载评论中...</div>
+        <div v-else-if="!editorComments.length" class="ec-empty">暂无评论</div>
+        <div v-else class="ec-list">
+          <div v-for="c in editorComments" :key="c.id" class="ec-row">
+            <input type="checkbox" :checked="editorSelectedIds.includes(c.id)" @change="editorToggleSelect(c.id)" class="ec-check" />
+            <div class="ec-body">
+              <div class="ec-meta">
+                <strong>{{ c.author }}</strong>
+                <span :class="['ec-status', 's-' + c.status]">{{ editorStatusLabel(c.status) }}</span>
+                <time>{{ editorFormatDateTime(c.created_at) }}</time>
+                <span v-if="c.parent_id" class="ec-parent">回复 #{{ c.parent_id }}</span>
+              </div>
+              <p class="ec-content">{{ c.content }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <input
+      ref="batchImageInput"
+      type="file"
+      accept=".jpg,.jpeg,.png,.gif,.webp,.svg"
+      multiple
+      class="file-hidden"
+      @change="handleBatchImageSelect"
+    />
+
+    <div v-if="imgImportDlg.visible" class="modal-overlay" @click.self="closeImageImportDlg">
+      <div class="modal modal-import">
+        <h3>检测到 {{ imgImportDlg.refs.length }} 个本地图片引用</h3>
+        <ul class="import-img-list">
+          <li v-for="r in imgImportDlg.results" :key="r.original" :class="'import-img-item ' + r.status">
+            <span class="import-img-path" :title="r.original">{{ r.original }}</span>
+            <span v-if="r.status === 'pending'" class="import-img-badge pending">待上传</span>
+            <span v-else-if="r.status === 'uploading'" class="import-img-badge uploading">上传中...</span>
+            <span v-else-if="r.status === 'uploaded'" class="import-img-badge uploaded">已上传</span>
+            <span v-else-if="r.status === 'notfound'" class="import-img-badge notfound">未找到文件</span>
+            <span v-else-if="r.status === 'failed'" class="import-img-badge failed">上传失败</span>
+          </li>
+        </ul>
+        <div class="modal-actions">
+          <button @click="skipImageImport" class="btn-cancel">跳过</button>
+          <button @click="triggerBatchImageUpload" class="btn-upload">选择图片上传</button>
+          <button v-if="imgImportDlg.results.some(r => r.status === 'notfound' || r.status === 'failed')"
+            @click="closeImageImportDlg" class="btn-close-dlg">关闭</button>
+          <button v-else-if="imgImportDlg.results.every(r => r.status === 'uploaded')"
+            @click="closeImageImportDlg" class="btn-close-dlg">完成</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -137,13 +209,14 @@
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { articles as api, categories as catApi, tags as tagApi, upload as uploadApi } from '../api'
+import { articles as api, categories as catApi, tags as tagApi, upload as uploadApi, comments as commentsApi } from '../api'
 import { marked } from 'marked'
 import { addHeadingIds } from '../utils/html'
 
 const route = useRoute()
 const router = useRouter()
 const isEdit = computed(() => !!route.params.id)
+const articleId = computed(() => isEdit.value ? Number(route.params.id) : null)
 const loggedIn = ref(!!localStorage.getItem('token'))
 const form = ref({ title: '', slug: '', excerpt: '', cover: '', content_md: '', status: 1, category_id: null, tag_ids: [], series: '', series_order: 0, is_announcement: 0 })
 const categories = ref([])
@@ -153,7 +226,19 @@ const saveMsg = ref('')
 const textareaRef = ref(null)
 const fileInput = ref(null)
 const coverFileInput = ref(null)
+const mdFileInput = ref(null)
+const batchImageInput = ref(null)
 const imgPicker = ref({ visible: false, style: {}, src: '' })
+const imgImportDlg = ref({ visible: false, refs: [], results: [] })
+
+const editorComments = ref([])
+const editorCommentTotal = ref(0)
+const editorCommentsLoading = ref(false)
+const editorSelectedIds = ref([])
+
+const editorAllSelected = computed(() => {
+  return editorComments.value.length > 0 && editorSelectedIds.value.length === editorComments.value.length
+})
 
 function onPreviewClick(e) {
   const img = e.target.closest('img')
@@ -247,6 +332,7 @@ async function loadArticle() {
       }
     }
   } catch {}
+  fetchEditorComments()
 }
 
 async function publish(status) {
@@ -323,6 +409,172 @@ function insertImageMarkdown(url, alt) {
   const text = form.value.content_md
   form.value.content_md = text.substring(0, pos) + md + '\n' + text.substring(pos)
   nextTick(() => ta.focus())
+}
+
+/* MD file import */
+function importMdTrigger() {
+  mdFileInput.value?.click()
+}
+
+function handleMdImport(e) {
+  const file = e.target.files?.[0]
+  if (!file) { e.target.value = ''; return }
+  const reader = new FileReader()
+  reader.onload = () => {
+    form.value.content_md = reader.result || ''
+    const name = file.name.replace(/\.md$/i, '')
+    if (!isEdit.value && name) {
+      form.value.title = name
+    }
+    saveMsg.value = '已导入：' + file.name
+    setTimeout(() => { if (saveMsg.value?.startsWith('已导入')) saveMsg.value = '' }, 2000)
+    checkLocalImages()
+  }
+  reader.readAsText(file)
+  e.target.value = ''
+}
+
+function parseImageRefs(md) {
+  const refs = []
+  const seen = new Set()
+  const mdPattern = /!\[[^\]]*\]\(([^)]+)\)/g
+  const htmlPattern = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi
+  let m
+  while ((m = mdPattern.exec(md)) !== null) {
+    const path = m[1].trim()
+    if (isLocalPath(path) && !seen.has(path)) {
+      seen.add(path)
+      refs.push({ original: path, filename: path.split('/').pop().split('?')[0].split('#')[0] })
+    }
+  }
+  while ((m = htmlPattern.exec(md)) !== null) {
+    const path = m[1].trim()
+    if (isLocalPath(path) && !seen.has(path)) {
+      seen.add(path)
+      refs.push({ original: path, filename: path.split('/').pop().split('?')[0].split('#')[0] })
+    }
+  }
+  return refs
+}
+
+function isLocalPath(p) {
+  return !/^(https?:|data:|\/uploads\/)/i.test(p)
+}
+
+function checkLocalImages() {
+  const refs = parseImageRefs(form.value.content_md)
+  if (!refs.length) return
+  imgImportDlg.value = { visible: true, refs, results: refs.map(r => ({ ...r, status: 'pending' })) }
+}
+
+function skipImageImport() {
+  imgImportDlg.value.visible = false
+}
+
+function triggerBatchImageUpload() {
+  batchImageInput.value?.click()
+}
+
+async function handleBatchImageSelect(e) {
+  const files = Array.from(e.target.files || [])
+  e.target.value = ''
+  if (!files.length || !imgImportDlg.value.visible) return
+
+  const refs = imgImportDlg.value.refs
+  const results = imgImportDlg.value.results
+  const fileByName = {}
+  for (const f of files) fileByName[f.name] = f
+
+  let uploaded = 0
+  for (const r of refs) {
+    const file = fileByName[r.filename]
+    if (!file) {
+      results.find(x => x.original === r.original).status = 'notfound'
+      continue
+    }
+    try {
+      results.find(x => x.original === r.original).status = 'uploading'
+      const res = await uploadApi.image(file)
+      if (res.code === 200 && res.data) {
+        const url = res.data.url
+        form.value.content_md = replaceImagePath(form.value.content_md, r.original, url)
+        results.find(x => x.original === r.original).status = 'uploaded'
+        results.find(x => x.original === r.original).url = url
+        uploaded++
+      } else {
+        results.find(x => x.original === r.original).status = 'failed'
+      }
+    } catch {
+      results.find(x => x.original === r.original).status = 'failed'
+    }
+  }
+
+  saveMsg.value = `已上传 ${uploaded}/${refs.length} 张图片`
+  setTimeout(() => { if (saveMsg.value?.startsWith('已上传')) saveMsg.value = '' }, 4000)
+}
+
+function replaceImagePath(md, oldPath, newUrl) {
+  const escaped = escapeRegExp(oldPath)
+  md = md.replace(new RegExp(`!\\[([^\\]]*)\\]\\(${escaped}\\)`, 'g'), `![$1](${newUrl})`)
+  md = md.replace(new RegExp(`(<img[^>]*src=["'])${escaped}(["'][^>]*>)`, 'gi'), `$1${newUrl}$2`)
+  return md
+}
+
+function closeImageImportDlg() {
+  imgImportDlg.value.visible = false
+}
+
+/* Editor comment management */
+async function fetchEditorComments() {
+  if (!articleId.value) return
+  editorCommentsLoading.value = true
+  try {
+    const res = await commentsApi.adminList({ article_id: articleId.value, page_size: 100 })
+    if (res.code === 200 && res.data) {
+      editorComments.value = res.data.list || []
+      editorCommentTotal.value = res.data.total || editorComments.value.length
+    }
+  } catch {} finally {
+    editorCommentsLoading.value = false
+  }
+}
+
+function editorToggleSelect(id) {
+  const idx = editorSelectedIds.value.indexOf(id)
+  if (idx >= 0) {
+    editorSelectedIds.value.splice(idx, 1)
+  } else {
+    editorSelectedIds.value.push(id)
+  }
+}
+
+function editorToggleAll() {
+  if (editorAllSelected.value) {
+    editorSelectedIds.value = []
+  } else {
+    editorSelectedIds.value = editorComments.value.map(c => c.id)
+  }
+}
+
+async function editorBatchStatus(status) {
+  if (!editorSelectedIds.value.length) return
+  for (const id of editorSelectedIds.value) {
+    try { await commentsApi.updateStatus(id, status) } catch {}
+  }
+  editorSelectedIds.value = []
+  fetchEditorComments()
+}
+
+function editorStatusLabel(s) {
+  if (s === 0) return '待审核'
+  if (s === 2) return '已删除'
+  return '正常'
+}
+
+function editorFormatDateTime(s) {
+  if (!s) return ''
+  const d = new Date(s)
+  return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
 /* Image upload */
@@ -731,6 +983,24 @@ onMounted(() => {
   border-color: var(--color-vermilion);
 }
 
+.btn-import {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-muted);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--duration) var(--ease);
+}
+
+.btn-import:hover:not(:disabled) {
+  color: var(--color-ink);
+  border-color: var(--color-ink);
+}
+
 .btn-private {
   font-family: var(--font-body);
   font-size: var(--text-sm);
@@ -748,7 +1018,8 @@ onMounted(() => {
 
 .btn-publish:disabled,
 .btn-draft:disabled,
-.btn-private:disabled {
+.btn-private:disabled,
+.btn-import:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -804,5 +1075,256 @@ onMounted(() => {
 
 .preview-content :deep(img) {
   cursor: pointer;
+}
+
+/* Image import dialog */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+}
+
+.modal-import {
+  background: var(--color-paper);
+  border-radius: var(--radius);
+  padding: var(--space-6);
+  max-width: 520px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-import h3 {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--color-deep);
+  margin-bottom: var(--space-4);
+}
+
+.import-img-list {
+  list-style: none;
+  margin: 0 0 var(--space-4) 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.import-img-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+.import-img-item.pending { background: var(--color-card); }
+.import-img-item.uploading { background: #eff6ff; }
+.import-img-item.uploaded { background: #f0fdf4; }
+.import-img-item.notfound { background: #fef2f2; }
+.import-img-item.failed { background: #fff7ed; }
+
+.import-img-path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.import-img-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.import-img-badge.pending { background: #f1f5f9; color: #64748b; }
+.import-img-badge.uploading { background: #dbeafe; color: #1e40af; }
+.import-img-badge.uploaded { background: #d1fae5; color: #065f46; }
+.import-img-badge.notfound { background: #fee2e2; color: #991b1b; }
+.import-img-badge.failed { background: #ffedd5; color: #9a3412; }
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.btn-cancel {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  background: none;
+  border: 1px solid var(--color-border);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color var(--duration) var(--ease);
+}
+
+.btn-cancel:hover { border-color: var(--color-muted); }
+
+.btn-upload {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: white;
+  background: var(--color-vermilion);
+  border: none;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: opacity var(--duration) var(--ease);
+}
+
+.btn-upload:hover { opacity: 0.85; }
+
+.btn-close-dlg {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-ink);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color var(--duration) var(--ease);
+}
+
+.btn-close-dlg:hover { border-color: var(--color-ink); }
+
+/* Editor comment management */
+.editor-comments {
+  margin-top: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.ec-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-xs);
+}
+
+.ec-heading {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-deep);
+  margin: 0;
+}
+
+.ec-select-all {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.ec-batch-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.ec-btn {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  padding: 2px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all var(--duration) var(--ease);
+}
+
+.ec-approve { color: #065f46; background: #d1fae5; }
+.ec-approve:hover { border-color: #065f46; }
+.ec-delete { color: var(--color-vermilion); background: #fee2e2; }
+.ec-delete:hover { border-color: var(--color-vermilion); }
+
+.ec-loading,
+.ec-empty {
+  text-align: center;
+  padding: var(--space-6);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.ec-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.ec-row {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  align-items: flex-start;
+}
+
+.ec-row:last-child { border-bottom: none; }
+
+.ec-check {
+  margin-top: 4px;
+  flex-shrink: 0;
+  accent-color: var(--color-vermilion);
+}
+
+.ec-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ec-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+}
+
+.ec-meta strong {
+  color: var(--color-deep);
+  font-size: var(--text-sm);
+}
+
+.ec-status {
+  font-weight: 600;
+  padding: 0 6px;
+  border-radius: 3px;
+  font-size: 0.65rem;
+}
+
+.ec-parent { color: var(--color-muted); }
+
+.ec-content {
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--color-ink);
+  word-break: break-word;
 }
 </style>

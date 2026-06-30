@@ -41,7 +41,7 @@
             </label>
             <div class="cp-batch-actions" v-if="selectedIds.length">
               <button @click="batchUpdateStatus(1)" class="cp-btn cp-approve">通过 ({{ selectedIds.length }})</button>
-              <button @click="batchDelete" class="cp-btn cp-delete">删除 ({{ selectedIds.length }})</button>
+              <button @click="batchUpdateStatus(2)" class="cp-btn cp-delete">删除 ({{ selectedIds.length }})</button>
             </div>
             <button @click="openPanel = null" class="cp-close">&times;</button>
           </div>
@@ -71,16 +71,6 @@
         <button class="page-btn" :disabled="page >= totalPages" @click="goPage(page + 1)">下页 &rarr;</button>
       </div>
     </div>
-
-    <div v-if="deleteConfirm" class="modal-overlay" @click.self="deleteConfirm = null">
-      <div class="modal">
-        <p>{{ deleteConfirm.title }}</p>
-        <div class="modal-actions">
-          <button class="btn-cancel" @click="deleteConfirm = null">取消</button>
-          <button class="btn-delete" @click="deleteConfirm.onOk">确认删除</button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -100,7 +90,6 @@ const panelComments = ref([])
 const commentCounts = ref({})
 const commentLoading = ref(false)
 const selectedIds = ref([])
-const deleteConfirm = ref(null)
 
 const allSelected = computed(() => {
   return panelComments.value.length > 0 && selectedIds.value.length === panelComments.value.length
@@ -189,25 +178,9 @@ async function batchUpdateStatus(status) {
   if (a) toggleComments(a)
 }
 
-function batchDelete() {
-  if (!selectedIds.value.length) return
-  deleteConfirm.value = {
-    title: `确认删除 ${selectedIds.value.length} 条评论？`,
-    async onOk() {
-      for (const id of selectedIds.value) {
-        try { await commentsApi.delete(id) } catch {}
-      }
-      deleteConfirm.value = null
-      selectedIds.value = []
-      const a = articles.value.find(x => x.id === openPanel.value)
-      if (a) toggleComments(a)
-    },
-  }
-}
-
 function statusLabel(s) {
-  if (s === 0) return '待审'
-  if (s === 2) return '已删'
+  if (s === 0) return '待审核'
+  if (s === 2) return '已删除'
   return '正常'
 }
 
@@ -527,61 +500,6 @@ onMounted(fetch)
   color: var(--color-ink);
   word-break: break-word;
 }
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-.modal {
-  background: var(--color-paper);
-  border-radius: var(--radius);
-  padding: var(--space-6);
-  max-width: 400px;
-  width: 90%;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-}
-
-.modal p { margin-bottom: var(--space-6); font-size: var(--text-base); }
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-3);
-}
-
-.btn-cancel {
-  font-family: var(--font-body);
-  font-size: var(--text-sm);
-  color: var(--color-muted);
-  background: none;
-  border: 1px solid var(--color-border);
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-
-.btn-cancel:hover { border-color: var(--color-muted); }
-
-.btn-delete {
-  font-family: var(--font-body);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: #fff;
-  background: var(--color-vermilion);
-  border: none;
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-
-.btn-delete:hover { opacity: 0.85; }
 
 @media (max-width: 640px) {
   .table-row { flex-direction: column; align-items: flex-start; gap: var(--space-2); }
