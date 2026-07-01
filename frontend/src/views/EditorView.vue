@@ -126,7 +126,7 @@
           <div class="pane-header">
             <span class="pane-label">预览</span>
           </div>
-          <div class="preview-content" v-html="previewHtml" @click="onPreviewClick"></div>
+          <div class="preview-content markdown-body" v-html="previewHtml" @click="onPreviewClick"></div>
         </div>
       </div>
 
@@ -954,15 +954,18 @@ onMounted(() => {
   font-size: var(--text-sm);
 }
 
-.preview-content :deep(h1) { font-family: var(--font-display); font-size: var(--text-3xl); margin-bottom: var(--space-4); }
-.preview-content :deep(h2) { font-family: var(--font-display); font-size: var(--text-2xl); margin-bottom: var(--space-3); }
-.preview-content :deep(h3) { font-family: var(--font-display); font-size: var(--text-xl); margin-bottom: var(--space-3); }
-.preview-content :deep(p) { margin-bottom: var(--space-4); }
-.preview-content :deep(pre) { background: var(--color-deep); color: #e2e8f0; padding: var(--space-4); border-radius: var(--radius); overflow-x: auto; }
-.preview-content :deep(code) { font-family: var(--font-mono); font-size: 0.9em; background: var(--color-card); padding: 0.1em 0.3em; border-radius: 2px; }
-.preview-content :deep(pre code) { background: none; padding: 0; }
-.preview-content :deep(img) { max-width: 100%; border-radius: var(--radius); }
-.preview-content :deep(blockquote) { border-left: 3px solid var(--color-vermilion); padding-left: var(--space-4); color: var(--color-muted); margin: var(--space-4) 0; }
+.preview-content :deep(h1),
+.preview-content :deep(h2),
+.preview-content :deep(h3),
+.preview-content :deep(h4),
+.preview-content :deep(h5),
+.preview-content :deep(h6) {
+  font-family: var(--font-display);
+}
+
+.preview-content :deep(img) {
+  cursor: pointer;
+}
 
 .btns {
   display: flex;

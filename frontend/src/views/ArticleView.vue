@@ -33,7 +33,7 @@
           </div>
         </header>
 
-        <div class="article-content" v-html="article.content_html"></div>
+        <div class="article-content markdown-body" v-html="article.content_html"></div>
 
         <nav v-if="prevArticle || nextArticle" class="series-nav">
           <router-link v-if="prevArticle" :to="`/article/${prevArticle.slug}`" class="series-link series-prev">
@@ -287,54 +287,18 @@ time,
 
 .article-content :deep(h1),
 .article-content :deep(h2),
-.article-content :deep(h3) {
+.article-content :deep(h3),
+.article-content :deep(h4),
+.article-content :deep(h5),
+.article-content :deep(h6) {
   font-family: var(--font-display);
-  color: var(--color-deep);
-  margin-top: var(--space-8);
-  margin-bottom: var(--space-4);
   scroll-margin-top: 100px;
-}
-
-.article-content :deep(h1) { font-size: var(--text-3xl); }
-.article-content :deep(h2) { font-size: var(--text-2xl); }
-.article-content :deep(h3) { font-size: var(--text-xl); }
-
-.article-content :deep(p) {
-  margin-bottom: var(--space-6);
-}
-
-.article-content :deep(ul),
-.article-content :deep(ol) {
-  margin-left: var(--space-6);
-  margin-bottom: var(--space-6);
-}
-
-.article-content :deep(li) {
-  margin-bottom: var(--space-2);
-}
-
-.article-content :deep(a) {
-  color: var(--color-vermilion);
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 .article-content :deep(img) {
   display: block;
-  max-width: 100%;
-  height: auto;
-  margin: var(--space-6) auto;
-  border-radius: var(--radius);
-}
-
-.article-content :deep(hr) {
-  border: none;
-  border-top: 1px solid var(--color-border);
-  margin: var(--space-8) 0;
-}
-
-.article-content :deep(pre) {
-  margin: var(--space-6) 0;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Series navigation */
