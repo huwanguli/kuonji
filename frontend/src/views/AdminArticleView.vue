@@ -215,6 +215,7 @@ function formatDateTime(s) {
   line-height: 1.85;
   color: var(--color-ink);
   margin-bottom: var(--space-10);
+  background: transparent;
 }
 
 .preview-content :deep(h1),

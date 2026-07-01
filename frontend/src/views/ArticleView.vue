@@ -283,6 +283,7 @@ time,
   padding: var(--space-8) 0;
   border-top: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
+  background: transparent;
 }
 
 .article-content :deep(h1),

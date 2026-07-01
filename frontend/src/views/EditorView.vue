@@ -946,6 +946,7 @@ onMounted(() => {
   font-size: var(--text-base);
   line-height: 1.85;
   color: var(--color-ink);
+  background: transparent;
 }
 
 .preview-empty {
