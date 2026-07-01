@@ -51,6 +51,16 @@ func (s *articleService) Create(req *dto.CreateArticleRequest) (*model.Article, 
 		slug = utils.GenerateSlug(req.Title)
 	}
 
+	baseSlug := slug
+	for i := 2; ; i++ {
+		existing, err := s.articleRepo.FindBySlug(slug)
+		if err != nil {
+			break
+		}
+		_ = existing
+		slug = fmt.Sprintf("%s-%d", baseSlug, i)
+	}
+
 	article := &model.Article{
 		Title:       req.Title,
 		Slug:        slug,
@@ -99,6 +109,9 @@ func (s *articleService) Update(id uint, req *dto.UpdateArticleRequest) (*model.
 
 	article.Title = req.Title
 	if req.Slug != "" {
+		if existing, err := s.articleRepo.FindBySlug(req.Slug); err == nil && existing.ID != id {
+			return nil, fmt.Errorf("slug '%s' 已被其他文章使用", req.Slug)
+		}
 		article.Slug = req.Slug
 	}
 	article.ContentMD = req.ContentMD

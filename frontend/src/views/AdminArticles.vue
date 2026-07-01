@@ -143,6 +143,10 @@ async function toggleComments(a) {
     return
   }
   openPanel.value = a.id
+  await loadComments(a)
+}
+
+async function loadComments(a) {
   selectedIds.value = []
   panelComments.value = []
   commentLoading.value = true
@@ -183,7 +187,7 @@ async function batchUpdateStatus(status) {
   selectedIds.value = []
   if (failed) alert(`${failed} 条评论操作失败`)
   const a = articles.value.find(x => x.id === openPanel.value)
-  if (a) toggleComments(a)
+  if (a) loadComments(a)
 }
 
 function statusLabel(s) {
