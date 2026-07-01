@@ -137,7 +137,7 @@
         </button>
       </div>
 
-      <p v-if="saveMsg" :class="['save-msg', saveMsg.includes('失败') ? 'save-error' : '' ]">{{ saveMsg }}</p>
+      <p v-if="saveMsg" :class="['save-msg', { 'save-error': saveError }]">{{ saveMsg }}</p>
 
       <section v-if="isEdit && articleId" class="editor-comments">
         <div class="ec-toolbar">
@@ -223,6 +223,7 @@ const categories = ref([])
 const allTags = ref([])
 const saving = ref(false)
 const saveMsg = ref('')
+const saveError = ref(false)
 const textareaRef = ref(null)
 const fileInput = ref(null)
 const coverFileInput = ref(null)
@@ -311,33 +312,47 @@ function autoSlug() {
 async function loadArticle() {
   if (!isEdit.value) return
   try {
-    const res = await api.adminList()
-    if (res.code === 200) {
-      const list = res.data.list || []
-      const found = list.find(a => a.id === Number(route.params.id))
-      if (found) {
-        form.value = {
-          title: found.title,
-          slug: found.slug,
-          excerpt: found.excerpt || '',
-          cover: found.cover || '',
-          content_md: found.content_md,
-          status: found.status,
-          category_id: found.category_id || null,
-          tag_ids: (found.tags || []).map(t => t.id),
-          series: found.series || '',
-          series_order: found.series_order || 0,
-          is_announcement: found.is_announcement || 0,
-        }
+    const res = await api.adminDetail(Number(route.params.id))
+    if (res.code === 200 && res.data) {
+      const found = res.data
+      form.value = {
+        title: found.title,
+        slug: found.slug,
+        excerpt: found.excerpt || '',
+        cover: found.cover || '',
+        content_md: found.content_md,
+        status: found.status,
+        category_id: found.category_id || null,
+        tag_ids: (found.tags || []).map(t => t.id),
+        series: found.series || '',
+        series_order: found.series_order || 0,
+        is_announcement: found.is_announcement || 0,
       }
+    } else {
+      saveMsg.value = '加载文章失败'
+      saveError.value = true
     }
-  } catch {}
+  } catch {
+    saveMsg.value = '加载文章失败，请刷新重试'
+    saveError.value = true
+  }
   fetchEditorComments()
 }
 
 async function publish(status) {
+  if (!form.value.title?.trim()) {
+    saveMsg.value = '请输入文章标题'
+    saveError.value = true
+    return
+  }
+  if (!form.value.content_md?.trim()) {
+    saveMsg.value = '请输入文章正文'
+    saveError.value = true
+    return
+  }
   saving.value = true
   saveMsg.value = ''
+  saveError.value = false
   try {
     form.value.status = status
     let res
@@ -347,6 +362,7 @@ async function publish(status) {
       res = await api.create(form.value)
     }
     if (res.code === 200) {
+      saveError.value = false
       if (status === 2) {
         saveMsg.value = '已设为私密！'
       } else {
@@ -357,9 +373,11 @@ async function publish(status) {
       }
     } else {
       saveMsg.value = res.message || '保存失败'
+      saveError.value = true
     }
   } catch {
-    saveMsg.value = '保存失败，请重试。'
+    saveMsg.value = '网络错误，请重试'
+    saveError.value = true
   } finally {
     saving.value = false
   }

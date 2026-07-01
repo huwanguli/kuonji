@@ -127,8 +127,14 @@ async function deleteArticle(id) {
   if (!confirm('确定删除这篇文章？')) return
   try {
     const res = await api.delete(id)
-    if (res.code === 200) fetch()
-  } catch {}
+    if (res.code === 200) {
+      fetch()
+    } else {
+      alert(res.message || '删除失败')
+    }
+  } catch {
+    alert('网络错误，删除失败，请重试')
+  }
 }
 
 async function toggleComments(a) {
@@ -170,10 +176,12 @@ function toggleAll() {
 
 async function batchUpdateStatus(status) {
   if (!selectedIds.value.length) return
+  let failed = 0
   for (const id of selectedIds.value) {
-    try { await commentsApi.updateStatus(id, status) } catch {}
+    try { await commentsApi.updateStatus(id, status) } catch { failed++ }
   }
   selectedIds.value = []
+  if (failed) alert(`${failed} 条评论操作失败`)
   const a = articles.value.find(x => x.id === openPanel.value)
   if (a) toggleComments(a)
 }

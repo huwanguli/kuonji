@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -10,6 +11,18 @@ import (
 	"zblog-backend/internal/model"
 	"zblog-backend/internal/service"
 )
+
+func translateBindErr(err error) string {
+	msg := err.Error()
+	switch {
+	case strings.Contains(msg, "Title"):
+		return "请填写文章标题"
+	case strings.Contains(msg, "ContentMD"):
+		return "请填写文章正文"
+	default:
+		return "请求参数有误"
+	}
+}
 
 type ArticleHandler struct {
 	articleService service.ArticleService
@@ -116,7 +129,7 @@ func (h *ArticleHandler) GetAdminList(c *gin.Context) {
 func (h *ArticleHandler) Create(c *gin.Context) {
 	var req dto.CreateArticleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusOK, dto.BadRequest(err.Error()))
+		c.JSON(http.StatusOK, dto.BadRequest(translateBindErr(err)))
 		return
 	}
 
@@ -138,7 +151,7 @@ func (h *ArticleHandler) Update(c *gin.Context) {
 
 	var req dto.UpdateArticleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusOK, dto.BadRequest(err.Error()))
+		c.JSON(http.StatusOK, dto.BadRequest(translateBindErr(err)))
 		return
 	}
 
