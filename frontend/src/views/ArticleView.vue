@@ -54,21 +54,6 @@
 
         <CommentForm :article-id="article.id" @posted="fetchComments" />
         <CommentList :comments="comments" :total="commentTotal" :article-id="article.id" @posted="fetchComments" />
-
-        <section v-if="relatedArticles.length" class="related-section">
-          <h3 class="related-title">相关文章</h3>
-          <div class="related-grid">
-            <router-link
-              v-for="a in relatedArticles"
-              :key="a.id"
-              :to="`/article/${a.slug}`"
-              class="related-card"
-            >
-              <span class="related-card-title">{{ a.title }}</span>
-              <span class="related-card-date">{{ formatDate(a.created_at) }}</span>
-            </router-link>
-          </div>
-        </section>
       </div>
 
       <div v-else-if="loading" class="loading">加载中...</div>
@@ -93,7 +78,6 @@ const nextArticle = ref(null)
 const loading = ref(true)
 const comments = ref([])
 const commentTotal = ref(0)
-const relatedArticles = ref([])
 
 async function fetchArticle() {
   loading.value = true
@@ -105,7 +89,6 @@ async function fetchArticle() {
       prevArticle.value = res.data.prev_in_series || null
       nextArticle.value = res.data.next_in_series || null
       fetchComments()
-      fetchRelated()
     } else {
       article.value = null
     }
@@ -114,18 +97,6 @@ async function fetchArticle() {
   } finally {
     loading.value = false
   }
-}
-
-async function fetchRelated() {
-  if (!article.value) return
-  try {
-    const params = { page_size: 3 }
-    if (article.value.category_id) params.category_id = article.value.category_id
-    const res = await articles.list(params)
-    if (res.code === 200) {
-      relatedArticles.value = (res.data.list || []).filter(a => a.id !== article.value.id).slice(0, 3)
-    }
-  } catch {}
 }
 
 async function fetchComments() {
@@ -351,54 +322,6 @@ time,
   display: flex;
   justify-content: center;
   padding: var(--space-6) 0;
-}
-
-/* Related articles */
-.related-section {
-  margin-top: var(--space-12);
-  padding-top: var(--space-8);
-  border-top: 1px solid var(--color-border);
-}
-
-.related-title {
-  font-family: var(--font-display);
-  font-size: var(--text-xl);
-  color: var(--color-deep);
-  margin-bottom: var(--space-4);
-}
-
-.related-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: var(--space-4);
-}
-
-.related-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  text-decoration: none;
-  transition: all var(--duration) var(--ease);
-}
-
-.related-card:hover {
-  border-color: var(--color-muted);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-
-.related-card-title {
-  font-weight: 500;
-  font-size: var(--text-sm);
-  color: var(--color-ink);
-  line-height: 1.4;
-}
-
-.related-card-date {
-  font-size: var(--text-xs);
-  color: var(--color-muted);
 }
 
 @media (max-width: 640px) {
