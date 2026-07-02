@@ -86,15 +86,6 @@ func (h *ArticleHandler) GetAdminDetail(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.Success(article))
 }
 
-func (h *ArticleHandler) GetSeriesList(c *gin.Context) {
-	series, err := h.articleService.GetSeriesList()
-	if err != nil {
-		c.JSON(http.StatusOK, dto.InternalError(err.Error()))
-		return
-	}
-	c.JSON(http.StatusOK, dto.Success(series))
-}
-
 func (h *ArticleHandler) GetAnnouncements(c *gin.Context) {
 	announcements, err := h.articleService.GetAnnouncements()
 	if err != nil {

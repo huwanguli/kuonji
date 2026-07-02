@@ -5,7 +5,11 @@
     <main class="page-main">
       <div v-if="article" class="article-content-wrapper">
         <nav class="breadcrumb">
-          <router-link to="/" class="back-link">&larr; 返回首页</router-link>
+          <router-link to="/" class="back-link">首页</router-link>
+          <template v-if="article.series">
+            <span class="breadcrumb-sep">/</span>
+            <router-link :to="`/series/${article.series}`" class="back-link">{{ article.series }}</router-link>
+          </template>
         </nav>
 
         <div class="article-cover" v-if="article.cover">
@@ -35,22 +39,40 @@
 
         <div class="article-content markdown-body" v-html="article.content_html"></div>
 
-        <nav v-if="prevArticle || nextArticle" class="series-nav">
-          <router-link v-if="prevArticle" :to="`/article/${prevArticle.slug}`" class="series-link series-prev">
-            <span class="series-label">&larr; 上一篇</span>
-            <span class="series-title">{{ prevArticle.title }}</span>
-          </router-link>
-          <span v-else class="series-link series-void"></span>
-          <router-link v-if="nextArticle" :to="`/article/${nextArticle.slug}`" class="series-link series-next">
-            <span class="series-label">下一篇 &rarr;</span>
-            <span class="series-title">{{ nextArticle.title }}</span>
-          </router-link>
-          <span v-else class="series-link series-void"></span>
-        </nav>
+        <div v-if="article.series && (prevArticle || nextArticle || seriesArticles.length)" class="series-nav-wrap">
+          <div class="series-nav-header">
+            <router-link :to="`/series/${article.series}`" class="series-nav-name">{{ article.series }}</router-link>
+            <span class="series-nav-pos" v-if="seriesTotal">(第 {{ article.series_order || '—' }} 篇 / 共 {{ seriesTotal }} 篇)</span>
+          </div>
 
-        <nav class="article-footer-nav">
-          <router-link to="/" class="back-link">&larr; 返回首页</router-link>
-        </nav>
+          <nav class="series-nav">
+            <router-link v-if="prevArticle" :to="`/article/${prevArticle.slug}`" class="series-link series-prev">
+              <span class="series-label">&larr; 上一篇</span>
+              <span class="series-link-title">{{ prevArticle.title }}</span>
+            </router-link>
+            <span v-else class="series-link series-void"></span>
+            <router-link v-if="nextArticle" :to="`/article/${nextArticle.slug}`" class="series-link series-next">
+              <span class="series-label">下一篇 &rarr;</span>
+              <span class="series-link-title">{{ nextArticle.title }}</span>
+            </router-link>
+            <span v-else class="series-link series-void"></span>
+          </nav>
+
+          <button v-if="seriesArticles.length > 1" class="series-toc-toggle" @click="seriesExpanded = !seriesExpanded">
+            目录 {{ seriesExpanded ? '▾' : '▸' }}
+          </button>
+          <div v-if="seriesExpanded && seriesArticles.length" class="series-toc">
+            <router-link
+              v-for="(sa, i) in seriesArticles"
+              :key="sa.slug"
+              :to="`/article/${sa.slug}`"
+              :class="['series-toc-item', { active: sa.slug === article.slug }]"
+            >
+              <span class="series-toc-order">{{ i + 1 }}</span>
+              <span class="series-toc-title">{{ sa.title }}</span>
+            </router-link>
+          </div>
+        </div>
 
         <CommentForm :article-id="article.id" @posted="fetchComments" />
         <CommentList :comments="comments" :total="commentTotal" :article-id="article.id" @posted="fetchComments" />
@@ -75,6 +97,9 @@ const route = useRoute()
 const article = ref(null)
 const prevArticle = ref(null)
 const nextArticle = ref(null)
+const seriesTotal = ref(0)
+const seriesArticles = ref([])
+const seriesExpanded = ref(false)
 const loading = ref(true)
 const comments = ref([])
 const commentTotal = ref(0)
@@ -88,6 +113,8 @@ async function fetchArticle() {
       article.value.content_html = addHeadingIds(article.value.content_html)
       prevArticle.value = res.data.prev_in_series || null
       nextArticle.value = res.data.next_in_series || null
+      seriesTotal.value = res.data.series_total || 0
+      seriesArticles.value = res.data.series_articles || []
       fetchComments()
     } else {
       article.value = null
@@ -144,18 +171,30 @@ onMounted(fetchArticle)
 
 /* Breadcrumb */
 .breadcrumb {
-  padding: var(--space-4) 0 var(--space-2);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0 var(--space-6);
 }
 
 .back-link {
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   color: var(--color-muted);
   text-decoration: none;
   transition: color var(--duration) var(--ease);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
 }
 
 .back-link:hover {
   color: var(--color-vermilion);
+  background: var(--color-card);
+}
+
+.breadcrumb-sep {
+  font-size: var(--text-base);
+  color: var(--color-border);
+  margin: 0 var(--space-1);
 }
 
 /* Header */
@@ -274,11 +313,42 @@ time,
 }
 
 /* Series navigation */
+.series-nav-wrap {
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border);
+}
+
+.series-nav-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.series-nav-name {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-deep);
+  text-decoration: none;
+  transition: color var(--duration) var(--ease);
+}
+
+.series-nav-name:hover {
+  color: var(--color-vermilion);
+}
+
+.series-nav-pos {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
 .series-nav {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-4);
-  padding: var(--space-6) 0;
+  margin-bottom: var(--space-4);
 }
 
 .series-link {
@@ -308,7 +378,7 @@ time,
   letter-spacing: 0.04em;
 }
 
-.series-title {
+.series-link-title {
   font-size: var(--text-sm);
   color: var(--color-ink);
   font-weight: 500;
@@ -318,10 +388,70 @@ time,
   visibility: hidden;
 }
 
-.article-footer-nav {
+.series-toc-toggle {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  background: none;
+  border: none;
+  padding: var(--space-2) 0;
+  cursor: pointer;
+  transition: color var(--duration) var(--ease);
+}
+
+.series-toc-toggle:hover {
+  color: var(--color-ink);
+}
+
+.series-toc {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: var(--space-2);
+}
+
+.series-toc-item {
   display: flex;
-  justify-content: center;
-  padding: var(--space-6) 0;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  border-bottom: 1px solid var(--color-border);
+  transition: background var(--duration) var(--ease);
+}
+
+.series-toc-item:last-child {
+  border-bottom: none;
+}
+
+.series-toc-item:hover {
+  background: var(--color-card);
+}
+
+.series-toc-item.active {
+  background: var(--color-card);
+}
+
+.series-toc-item.active .series-toc-title {
+  color: var(--color-vermilion);
+  font-weight: 600;
+}
+
+.series-toc-order {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.series-toc-title {
+  color: var(--color-ink);
 }
 
 @media (max-width: 640px) {

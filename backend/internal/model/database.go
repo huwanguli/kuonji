@@ -39,6 +39,7 @@ func InitDB(cfg *config.DatabaseConfig, logLevel gormlogger.LogLevel) error {
 		&Tag{},
 		&Article{},
 		&Comment{},
+		&Series{},
 	); err != nil {
 		return fmt.Errorf("failed to migrate: %w", err)
 	}

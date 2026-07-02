@@ -19,7 +19,6 @@ type ArticleService interface {
 	GetBySlug(slug string) (*dto.ArticleDetail, error)
 	GetList(query *dto.ArticleListQuery) ([]model.Article, int64, error)
 	GetAnnouncements() ([]model.Article, error)
-	GetSeriesList() ([]dto.SeriesInfo, error)
 }
 
 type articleService struct {
@@ -171,7 +170,7 @@ func (s *articleService) GetBySlug(slug string) (*dto.ArticleDetail, error) {
 
 	detail := &dto.ArticleDetail{Article: article}
 
-	if article.Series != "" && article.SeriesOrder > 0 {
+	if article.Series != "" {
 		prev, err := s.articleRepo.FindPrevInSeries(article.Series, article.SeriesOrder)
 		if err == nil && prev != nil {
 			detail.PrevInSeries = &dto.SeriesLink{Slug: prev.Slug, Title: prev.Title}
@@ -180,6 +179,17 @@ func (s *articleService) GetBySlug(slug string) (*dto.ArticleDetail, error) {
 		if err == nil && next != nil {
 			detail.NextInSeries = &dto.SeriesLink{Slug: next.Slug, Title: next.Title}
 		}
+
+		allArticles, err := s.articleRepo.FindBySeries(article.Series)
+		if err == nil {
+			detail.SeriesTotal = len(allArticles)
+			for _, a := range allArticles {
+				detail.SeriesArticles = append(detail.SeriesArticles, dto.SeriesLink{
+					Slug:  a.Slug,
+					Title: a.Title,
+				})
+			}
+		}
 	}
 
 	return detail, nil
@@ -187,10 +197,6 @@ func (s *articleService) GetBySlug(slug string) (*dto.ArticleDetail, error) {
 
 func (s *articleService) GetList(query *dto.ArticleListQuery) ([]model.Article, int64, error) {
 	return s.articleRepo.FindList(query)
-}
-
-func (s *articleService) GetSeriesList() ([]dto.SeriesInfo, error) {
-	return s.articleRepo.FindSeriesList()
 }
 
 func (s *articleService) GetAnnouncements() ([]model.Article, error) {

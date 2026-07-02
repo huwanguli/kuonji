@@ -106,7 +106,7 @@ GET /api/articles/:slug
 ```
 
 > - 每次访问详情会自增 `view_count`。
-> - `prev_in_series` / `next_in_series` 仅当文章属于某个系列（`series` 非空且 `series_order > 0`）且存在前后篇时返回。
+> - `prev_in_series` / `next_in_series` 仅当文章设置了 `series` 且存在前后篇时返回。
 
 ---
 
@@ -148,6 +148,8 @@ GET /api/tags
 
 ### 系列
 
+#### 系列列表
+
 ```
 GET /api/series
 ```
@@ -157,15 +159,42 @@ GET /api/series
   "code": 200,
   "data": [
     {
+      "id": 1,
       "name": "building-a-compiler",
       "count": 5,
-      "latest_slug": "building-a-compiler-part-5"
+      "cover": "/uploads/2025/cover.jpg",
+      "description": "从零开始写一个编译器"
     }
   ]
 }
 ```
 
-> 只返回已发布文章数 ≥1 的系列，按文章数降序排列。
+> 返回 `series` 表中存在的所有系列，`count` 为该系列下已发布文章数。
+
+#### 系列详情
+
+```
+GET /api/series/:name
+```
+
+```json
+{
+  "code": 200,
+  "data": {
+    "series": {
+      "id": 1,
+      "name": "building-a-compiler",
+      "cover": "/uploads/2025/cover.jpg",
+      "description": "从零开始写一个编译器",
+      "count": 5
+    },
+    "articles": [
+      { "id": 1, "title": "Part 1", "slug": "part-1", "series_order": 1 },
+      { "id": 2, "title": "Part 2", "slug": "part-2", "series_order": 2 }
+    ]
+  }
+}
+```
 
 ---
 
@@ -343,6 +372,25 @@ DELETE /api/admin/articles/:id
 
 ---
 
+### 系列管理
+
+```json
+POST   /api/admin/series           { "name": "my-series", "cover": "", "description": "" }
+PUT    /api/admin/series/:id       { "name": "my-series", "cover": "", "description": "" }
+DELETE /api/admin/series/:id
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| name | string | 是 | 系列名称（唯一，重命名时同步更新关联文章） |
+| cover | string | 否 | 封面图 URL |
+| description | string | 否 | 简介 |
+
+> 删除系列时，所有关联文章的 `series` 字段会自动清空。
+
+---
+
+---
 ### 分类管理
 
 ```json

@@ -207,6 +207,16 @@ func TestArticleSeries(t *testing.T) {
 	r := testutil.SetupTestRouter(t)
 	token := loginAndGetToken(t, r)
 
+	// Create series first
+	seriesBody := `{"name":"my-series","cover":"","description":"A test series"}`
+	req0 := httptest.NewRequest("POST", "/api/admin/series", strings.NewReader(seriesBody))
+	req0.Header.Set("Content-Type", "application/json")
+	req0.Header.Set("Authorization", "Bearer "+token)
+	w0 := httptest.NewRecorder()
+	r.ServeHTTP(w0, req0)
+	m0 := parseJSON(t, w0.Body.Bytes())
+	assert.Equal(t, float64(200), m0["code"])
+
 	body := fmt.Sprintf(`{"title":"Part 1","content_md":"one","status":1,"series":"my-series","series_order":1}`)
 	req := httptest.NewRequest("POST", "/api/admin/articles", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -221,7 +231,7 @@ func TestArticleSeries(t *testing.T) {
 	w2 := httptest.NewRecorder()
 	r.ServeHTTP(w2, req2)
 
-	// Get series list
+	// Get series list (with counts from series table)
 	req3 := httptest.NewRequest("GET", "/api/series", nil)
 	w3 := httptest.NewRecorder()
 	r.ServeHTTP(w3, req3)
@@ -229,6 +239,18 @@ func TestArticleSeries(t *testing.T) {
 	assert.Equal(t, float64(200), m3["code"])
 	seriesList := m3["data"].([]interface{})
 	assert.Len(t, seriesList, 1)
+
+	// Get series detail
+	reqDetail := httptest.NewRequest("GET", "/api/series/my-series", nil)
+	wDetail := httptest.NewRecorder()
+	r.ServeHTTP(wDetail, reqDetail)
+	mDetail := parseJSON(t, wDetail.Body.Bytes())
+	assert.Equal(t, float64(200), mDetail["code"])
+	detail := mDetail["data"].(map[string]interface{})
+	detailSeries := detail["series"].(map[string]interface{})
+	assert.Equal(t, "my-series", detailSeries["name"])
+	detailArticles := detail["articles"].([]interface{})
+	assert.Len(t, detailArticles, 2)
 
 	// Get Part 2 and verify prev link
 	req4 := httptest.NewRequest("GET", "/api/articles/part-2", nil)

@@ -62,6 +62,59 @@
             <button @click="addTag" class="add-btn">添加</button>
           </div>
         </section>
+
+        <section class="admin-section admin-section-wide">
+          <h3>系列</h3>
+          <ul class="taxo-list" v-if="adminSeries.length">
+            <li v-for="s in adminSeries" :key="s.id">
+              <div class="taxo-item">
+                <span>{{ s.name }}</span>
+                <span class="taxo-count">{{ s.count }} 篇</span>
+                <div class="taxo-actions">
+                  <button @click="startEdit(s)" class="mini-btn">编辑</button>
+                  <button @click="deleteSeries(s.id)" class="del-btn">&times;</button>
+                </div>
+              </div>
+              <div v-if="editingSeries === s.id" class="series-edit-row">
+                <input v-model="editSeries.name" type="text" placeholder="系列名称" class="input-sm" />
+                <div class="cover-input-wrap">
+                  <input v-model="editSeries.cover" type="text" placeholder="封面图 URL" class="input-sm" />
+                  <button @click="clickEditCover" class="cover-upload-btn" title="上传封面">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  </button>
+                </div>
+                <input v-model="editSeries.desc" type="text" placeholder="简介" class="input-sm" />
+                <button @click="saveSeriesEdit(s)" class="add-btn">保存</button>
+              </div>
+            </li>
+          </ul>
+          <p class="series-hint" v-else>暂无系列。</p>
+          <div class="inline-form-series">
+            <input v-model="newSeries.name" type="text" placeholder="系列名称" class="input-sm" @keyup.enter="addSeries" />
+            <div class="cover-input-wrap">
+              <input v-model="newSeries.cover" type="text" placeholder="封面图 URL（选填）" class="input-sm" />
+              <button @click="uploadSeriesCover" class="cover-upload-btn" title="上传封面">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </button>
+            </div>
+            <input
+              ref="seriesCoverInput"
+              type="file"
+              accept=".jpg,.jpeg,.png,.gif,.webp"
+              class="file-hidden"
+              @change="handleSeriesCoverUpload"
+            />
+            <input v-model="newSeries.desc" type="text" placeholder="简介（选填）" class="input-sm" />
+            <button @click="addSeries" class="add-btn">新建</button>
+          </div>
+          <input
+            ref="editSeriesCoverInput"
+            type="file"
+            accept=".jpg,.jpeg,.png,.gif,.webp"
+            class="file-hidden"
+            @change="handleEditSeriesCoverUpload"
+          />
+        </section>
       </div>
     </div>
   </div>
@@ -70,7 +123,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { auth, categories as catApi, tags as tagApi, articles as articleApi, comments as commentsApi } from '../api'
+import { auth, categories as catApi, tags as tagApi, series as seriesApi, upload as uploadApi, articles as articleApi, comments as commentsApi } from '../api'
 
 const route = useRoute()
 const username = ref('')
@@ -82,8 +135,14 @@ const isLoggedIn = ref(false)
 
 const adminCategories = ref([])
 const adminTags = ref([])
+const adminSeries = ref([])
 const newCat = reactive({ name: '' })
 const newTag = reactive({ name: '' })
+const newSeries = reactive({ name: '', cover: '', desc: '' })
+const editingSeries = ref(null)
+const editSeries = reactive({ name: '', cover: '', desc: '' })
+const seriesCoverInput = ref(null)
+const editSeriesCoverInput = ref(null)
 const stats = reactive({ articles: 0, comments: 0 })
 
 async function login() {
@@ -112,14 +171,16 @@ function logout() {
 
 async function loadDashboard() {
   try {
-    const [catRes, tagRes, articleRes, commentRes] = await Promise.all([
+    const [catRes, tagRes, seriesRes, articleRes, commentRes] = await Promise.all([
       catApi.list(),
       tagApi.list(),
+      seriesApi.list(),
       articleApi.adminList({ page: 1, page_size: 1 }),
       commentsApi.adminList({ page: 1, page_size: 1 }),
     ])
     if (catRes.code === 200) adminCategories.value = catRes.data || []
     if (tagRes.code === 200) adminTags.value = tagRes.data || []
+    if (seriesRes.code === 200) adminSeries.value = seriesRes.data || []
     if (articleRes.code === 200) stats.articles = articleRes.data.total || 0
     if (commentRes.code === 200) stats.comments = commentRes.data.total || 0
   } catch {}
@@ -159,6 +220,81 @@ async function deleteTag(id) {
     const res = await tagApi.delete(id)
     if (res.code === 200) loadDashboard()
   } catch {}
+}
+
+async function deleteSeries(id) {
+  if (!confirm('确定删除这个系列？相关文章的系列归属将被清空，但文章不受影响。')) return
+  try {
+    const res = await seriesApi.delete(id)
+    if (res.code === 200) loadDashboard()
+  } catch { alert('删除失败，请重试') }
+}
+
+function startEdit(s) {
+  editingSeries.value = s.id
+  editSeries.name = s.name
+  editSeries.cover = s.cover || ''
+  editSeries.desc = s.description || ''
+}
+
+async function saveSeriesEdit(s) {
+  if (!editSeries.name.trim()) return
+  try {
+    const res = await seriesApi.update(s.id, {
+      name: editSeries.name.trim(),
+      cover: editSeries.cover.trim(),
+      description: editSeries.desc.trim(),
+    })
+    if (res.code === 200) {
+      editingSeries.value = null
+      loadDashboard()
+    }
+  } catch { alert('保存失败，请重试') }
+}
+
+async function addSeries() {
+  if (!newSeries.name.trim()) return
+  try {
+    const res = await seriesApi.create({ name: newSeries.name.trim(), cover: newSeries.cover.trim(), description: newSeries.desc.trim() })
+    if (res.code === 200) {
+      newSeries.name = ''
+      newSeries.cover = ''
+      newSeries.desc = ''
+      loadDashboard()
+    }
+  } catch {}
+}
+
+function uploadSeriesCover() {
+  seriesCoverInput.value?.click()
+}
+
+async function handleSeriesCoverUpload(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  try {
+    const res = await uploadApi.image(file)
+    if (res.code === 200 && res.data) {
+      newSeries.cover = res.data.url
+    }
+  } catch {}
+  e.target.value = ''
+}
+
+function clickEditCover() {
+  editSeriesCoverInput.value?.click()
+}
+
+async function handleEditSeriesCoverUpload(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  try {
+    const res = await uploadApi.image(file)
+    if (res.code === 200 && res.data) {
+      editSeries.cover = res.data.url
+    }
+  } catch {}
+  e.target.value = ''
 }
 
 onMounted(() => {
@@ -294,6 +430,7 @@ onMounted(() => {
   padding: var(--space-1) 0;
   font-size: var(--text-sm);
   color: var(--color-ink);
+  width: 100%;
 }
 
 .del-btn {
@@ -308,6 +445,43 @@ onMounted(() => {
 }
 
 .del-btn:hover { color: var(--color-vermilion); }
+
+.taxo-count {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+}
+
+.taxo-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.mini-btn {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  background: none;
+  border: 1px solid var(--color-border);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all var(--duration) var(--ease);
+}
+
+.mini-btn:hover {
+  color: var(--color-ink);
+  border-color: var(--color-ink);
+}
+
+.series-hint {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.admin-section-wide {
+  grid-column: 1 / -1;
+}
 
 .taxo-chips { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3); }
 
@@ -364,4 +538,68 @@ onMounted(() => {
 }
 
 .add-btn:hover { opacity: 0.85; }
+
+.series-edit-row {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2) 0 var(--space-3);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.series-edit-row .input-sm:first-child {
+  flex: 0 0 140px;
+}
+
+.series-edit-row .input-sm {
+  flex: 1;
+  min-width: 100px;
+}
+
+.cover-input-wrap {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+  min-width: 120px;
+}
+
+.cover-input-wrap .input-sm {
+  flex: 1;
+  min-width: 0;
+}
+
+.cover-upload-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-2);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.cover-upload-btn:hover {
+  color: var(--color-vermilion);
+  border-color: var(--color-vermilion);
+}
+
+.file-hidden { display: none; }
+
+.inline-form-series {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.inline-form-series .input-sm:first-child {
+  flex: 0 0 140px;
+}
+
+.inline-form-series .input-sm {
+  flex: 1;
+  min-width: 120px;
+}
 </style>

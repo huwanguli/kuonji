@@ -79,7 +79,7 @@ kuonji/
 │   └── internal/
 │       ├── config/config.go       # Viper 配置加载
 │       ├── logger/logger.go       # 日志初始化
-│       ├── model/                 # GORM 模型 (User/Article/Category/Tag/Comment)
+│       ├── model/                 # GORM 模型 (User/Article/Category/Tag/Comment/Series)
 │       ├── repository/            # 数据访问层
 │       ├── service/               # 业务逻辑层
 │       ├── handler/               # HTTP 处理层
@@ -112,6 +112,7 @@ kuonji/
 │           ├── AdminArticles.vue  # 文章管理列表
 │           ├── AdminComments.vue  # 评论管理
 │           ├── AdminArticleView.vue # 文章只读预览（后台）
+│           ├── SeriesView.vue     # 系列详情页
 │           └── EditorView.vue     # Markdown 编辑器
 ├── docker-compose.yml             # 容器编排
 └── .env.example                   # 环境变量模板
@@ -138,7 +139,8 @@ Model (GORM 模型定义)
 | GET | `/api/articles` | 文章列表（分页/分类/标签/系列筛选） |
 | GET | `/api/articles/:slug` | 文章详情（阅读量 +1，含系列前后篇） |
 | GET | `/api/announcements` | 公告列表 |
-| GET | `/api/series` | 系列列表 |
+| GET | `/api/series` | 系列列表（含文章数） |
+| GET | `/api/series/:name` | 系列详情（元数据 + 文章列表） |
 | GET | `/api/categories` | 分类列表 |
 | GET | `/api/tags` | 标签列表 |
 | GET | `/api/comments` | 文章评论 |
@@ -153,6 +155,7 @@ Model (GORM 模型定义)
 | GET/POST/PUT/DELETE | `/api/admin/articles` | 文章 CRUD + 详情（`GET /:id`） |
 | POST/PUT/DELETE | `/api/admin/categories` | 分类管理 |
 | POST/PUT/DELETE | `/api/admin/tags` | 标签管理 |
+| POST/PUT/DELETE | `/api/admin/series` | 系列管理（删除时清空关联文章） |
 | GET/PUT/DELETE | `/api/admin/comments` | 评论审核（软删除，可恢复） |
 | POST | `/api/admin/upload` | 图片上传 |
 
@@ -205,8 +208,9 @@ upload:
 | 路径 | 名称 | 说明 |
 |------|------|------|
 | `/` | 首页 | 随机标语 + 文章列表（支持分类/标签/系列筛选）+ 侧边栏 |
-| `/article/:slug` | 文章详情 | 封面图 + 正文 + 目录 + 评论 |
-| `/admin` | 管理面板 | 登录 + 分类/标签管理 |
+| `/article/:slug` | 文章详情 | 封面图 + 正文 + 目录 + 系列导航 + 评论 |
+| `/series/:name` | 系列详情 | 系列封面/简介 + 文章列表 |
+| `/admin` | 管理面板 | 登录 + 分类/标签/系列管理 |
 | `/admin/articles` | 文章管理 | 列表/筛选（全部/已发布/私密/草稿）/编辑/删除 + 文章评论管理 |
 | `/admin/articles/view/:id` | 文章预览 | 后台只读文章预览 + 评论管理，可跳转编辑 |
 | `/admin/comments` | 评论管理 | 全部评论审核（通过/软删除/恢复） |

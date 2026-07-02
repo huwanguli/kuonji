@@ -15,6 +15,7 @@ func Setup(
 	tagH *handler.TagHandler,
 	commentH *handler.CommentHandler,
 	uploadH *handler.UploadHandler,
+	seriesH *handler.SeriesHandler,
 ) *gin.Engine {
 	if config.Cfg.Server.Mode == "release" {
 		gin.SetMode(gin.ReleaseMode)
@@ -29,7 +30,8 @@ func Setup(
 	{
 		api.GET("/articles", articleH.GetPublicList)
 		api.GET("/articles/:slug", articleH.GetBySlug)
-		api.GET("/series", articleH.GetSeriesList)
+		api.GET("/series", seriesH.GetAll)
+		api.GET("/series/:name", seriesH.GetDetail)
 		api.GET("/announcements", articleH.GetAnnouncements)
 		api.GET("/categories", categoryH.GetAll)
 		api.GET("/tags", tagH.GetAll)
@@ -65,6 +67,10 @@ func Setup(
 			authGroup.DELETE("/comments/:id", commentH.Delete)
 
 			authGroup.POST("/upload", uploadH.Upload)
+
+			authGroup.POST("/series", seriesH.Create)
+			authGroup.PUT("/series/:id", seriesH.Update)
+			authGroup.DELETE("/series/:id", seriesH.Delete)
 		}
 	}
 

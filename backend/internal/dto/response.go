@@ -14,9 +14,16 @@ type PageData struct {
 }
 
 type SeriesInfo struct {
-	Name       string `json:"name"`
-	Count      int64  `json:"count"`
-	LatestSlug string `json:"latest_slug"`
+	ID          uint   `json:"id"`
+	Name        string `json:"name"`
+	Count       int64  `json:"count"`
+	Cover       string `json:"cover"`
+	Description string `json:"description"`
+}
+
+type SeriesDetail struct {
+	Series   SeriesInfo      `json:"series"`
+	Articles []SeriesArticle `json:"articles"`
 }
 
 type SeriesLink struct {
@@ -25,9 +32,18 @@ type SeriesLink struct {
 }
 
 type ArticleDetail struct {
-	Article      interface{} `json:"article"`
-	PrevInSeries *SeriesLink `json:"prev_in_series,omitempty"`
-	NextInSeries *SeriesLink `json:"next_in_series,omitempty"`
+	Article        interface{}       `json:"article"`
+	PrevInSeries   *SeriesLink       `json:"prev_in_series,omitempty"`
+	NextInSeries   *SeriesLink       `json:"next_in_series,omitempty"`
+	SeriesTotal    int               `json:"series_total,omitempty"`
+	SeriesArticles []SeriesLink      `json:"series_articles,omitempty"`
+}
+
+type SeriesArticle struct {
+	ID          uint   `json:"id"`
+	Title       string `json:"title"`
+	Slug        string `json:"slug"`
+	SeriesOrder int    `json:"series_order"`
 }
 
 type CommentListResponse struct {

@@ -24,7 +24,7 @@ func SetupTestRouter(t *testing.T) *gin.Engine {
 
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, err)
-	err = db.AutoMigrate(&model.User{}, &model.Category{}, &model.Tag{}, &model.Article{}, &model.Comment{})
+	err = db.AutoMigrate(&model.User{}, &model.Category{}, &model.Tag{}, &model.Article{}, &model.Comment{}, &model.Series{})
 	require.NoError(t, err)
 	model.SetDB(db)
 
@@ -48,11 +48,13 @@ func SetupTestRouter(t *testing.T) *gin.Engine {
 	categoryRepo := repository.NewCategoryRepository(db)
 	tagRepo := repository.NewTagRepository(db)
 	commentRepo := repository.NewCommentRepository(db)
+	seriesRepo := repository.NewSeriesRepository(db)
 
 	articleService := service.NewArticleService(articleRepo, categoryRepo, tagRepo)
 	categoryService := service.NewCategoryService(categoryRepo)
 	tagService := service.NewTagService(tagRepo)
 	commentService := service.NewCommentService(commentRepo, articleRepo)
+	seriesService := service.NewSeriesService(seriesRepo, articleRepo)
 
 	authH := handler.NewAuthHandler(authService)
 	articleH := handler.NewArticleHandler(articleService)
@@ -60,6 +62,7 @@ func SetupTestRouter(t *testing.T) *gin.Engine {
 	tagH := handler.NewTagHandler(tagService)
 	commentH := handler.NewCommentHandler(commentService)
 	uploadH := handler.NewUploadHandler()
+	seriesH := handler.NewSeriesHandler(seriesService)
 
-	return router.Setup(authH, articleH, categoryH, tagH, commentH, uploadH)
+	return router.Setup(authH, articleH, categoryH, tagH, commentH, uploadH, seriesH)
 }

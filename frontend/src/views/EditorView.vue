@@ -59,7 +59,10 @@
         <div class="taxonomy-group">
           <label class="taxonomy-label">系列</label>
           <div class="series-inputs">
-            <input v-model="form.series" type="text" placeholder="如 building-a-compiler" class="input" />
+            <input v-model="form.series" type="text" placeholder="选择或输入系列名" class="input" list="series-datalist" autocomplete="off" />
+            <datalist id="series-datalist">
+              <option v-for="s in seriesList" :key="s.name" :value="s.name" />
+            </datalist>
             <input v-model.number="form.series_order" type="number" placeholder="序号" class="input" min="0" />
           </div>
         </div>
@@ -209,7 +212,7 @@
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { articles as api, categories as catApi, tags as tagApi, upload as uploadApi, comments as commentsApi } from '../api'
+import { articles as api, categories as catApi, tags as tagApi, upload as uploadApi, comments as commentsApi, series as seriesApi } from '../api'
 import { marked } from 'marked'
 import { addHeadingIds } from '../utils/html'
 
@@ -221,6 +224,7 @@ const loggedIn = ref(!!localStorage.getItem('token'))
 const form = ref({ title: '', slug: '', excerpt: '', cover: '', content_md: '', status: 1, category_id: null, tag_ids: [], series: '', series_order: 0, is_announcement: 0 })
 const categories = ref([])
 const allTags = ref([])
+const seriesList = ref([])
 const saving = ref(false)
 const saveMsg = ref('')
 const saveError = ref(false)
@@ -668,9 +672,10 @@ function handleDrop(e) {
 
 async function fetchTaxonomies() {
   try {
-    const [catRes, tagRes] = await Promise.all([catApi.list(), tagApi.list()])
+    const [catRes, tagRes, seriesRes] = await Promise.all([catApi.list(), tagApi.list(), seriesApi.list()])
     if (catRes.code === 200) categories.value = catRes.data || []
     if (tagRes.code === 200) allTags.value = tagRes.data || []
+    if (seriesRes.code === 200) seriesList.value = seriesRes.data || []
   } catch {}
 }
 

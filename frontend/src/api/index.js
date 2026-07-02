@@ -53,6 +53,18 @@ export const series = {
   list() {
     return api.get('/series')
   },
+  detail(name) {
+    return api.get(`/series/${name}`)
+  },
+  create(data) {
+    return api.post('/admin/series', data, { headers: authHeader() })
+  },
+  update(id, data) {
+    return api.put(`/admin/series/${id}`, data, { headers: authHeader() })
+  },
+  delete(id) {
+    return api.delete(`/admin/series/${id}`, { headers: authHeader() })
+  },
 }
 
 export const announcements = {

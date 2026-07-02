@@ -23,7 +23,7 @@
       <ul class="sidebar-nav">
         <li v-for="s in seriesList" :key="s.name" class="sidebar-item">
           <router-link
-            :to="`/?series=${s.name}`"
+            :to="`/series/${s.name}`"
             :class="['sidebar-link', { active: activeSeries === s.name }]"
           >{{ s.name }}</router-link>
           <span class="sidebar-count">{{ s.count }}</span>
@@ -100,7 +100,7 @@ function readQuery() {
   const cid = parseInt(route.query.category_id)
   activeCategory.value = cid > 0 ? cid : null
   activeTag.value = parseInt(route.query.tag_id) > 0 ? parseInt(route.query.tag_id) : null
-  activeSeries.value = route.query.series || null
+  activeSeries.value = route.params.name || route.query.series || null
 }
 
 function scrollTo(id) {

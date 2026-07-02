@@ -44,11 +44,13 @@ func main() {
 	categoryRepo := repository.NewCategoryRepository(model.DB)
 	tagRepo := repository.NewTagRepository(model.DB)
 	commentRepo := repository.NewCommentRepository(model.DB)
+	seriesRepo := repository.NewSeriesRepository(model.DB)
 
 	articleService := service.NewArticleService(articleRepo, categoryRepo, tagRepo)
 	categoryService := service.NewCategoryService(categoryRepo)
 	tagService := service.NewTagService(tagRepo)
 	commentService := service.NewCommentService(commentRepo, articleRepo)
+	seriesService := service.NewSeriesService(seriesRepo, articleRepo)
 
 	authH := handler.NewAuthHandler(authService)
 	articleH := handler.NewArticleHandler(articleService)
@@ -56,8 +58,9 @@ func main() {
 	tagH := handler.NewTagHandler(tagService)
 	commentH := handler.NewCommentHandler(commentService)
 	uploadH := handler.NewUploadHandler()
+	seriesH := handler.NewSeriesHandler(seriesService)
 
-	r := router.Setup(authH, articleH, categoryH, tagH, commentH, uploadH)
+	r := router.Setup(authH, articleH, categoryH, tagH, commentH, uploadH, seriesH)
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 	logrus.Infof("server starting on %s", addr)

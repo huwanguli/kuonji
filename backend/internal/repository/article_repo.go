@@ -15,9 +15,11 @@ type ArticleRepository interface {
 	FindBySlug(slug string) (*model.Article, error)
 	FindList(query *dto.ArticleListQuery) ([]model.Article, int64, error)
 	FindAnnouncements() ([]model.Article, error)
-	FindSeriesList() ([]dto.SeriesInfo, error)
 	FindPrevInSeries(series string, order int) (*model.Article, error)
 	FindNextInSeries(series string, order int) (*model.Article, error)
+	FindBySeries(series string) ([]model.Article, error)
+	RenameSeries(oldName, newName string) error
+	RemoveSeries(name string) error
 	IncrementViewCount(id uint) error
 }
 
@@ -123,17 +125,6 @@ func (r *articleRepository) FindAnnouncements() ([]model.Article, error) {
 	return articles, err
 }
 
-func (r *articleRepository) FindSeriesList() ([]dto.SeriesInfo, error) {
-	var results []dto.SeriesInfo
-	err := r.db.Model(&model.Article{}).
-		Select("series as name, count(*) as count, max(slug) as latest_slug").
-		Where("series != '' AND status = 1").
-		Group("series").
-		Order("count DESC").
-		Find(&results).Error
-	return results, err
-}
-
 func (r *articleRepository) FindPrevInSeries(series string, order int) (*model.Article, error) {
 	var article model.Article
 	err := r.db.Where("series = ? AND series_order < ? AND status = 1", series, order).
@@ -154,4 +145,20 @@ func (r *articleRepository) FindNextInSeries(series string, order int) (*model.A
 		return nil, err
 	}
 	return &article, nil
+}
+
+func (r *articleRepository) FindBySeries(series string) ([]model.Article, error) {
+	var articles []model.Article
+	err := r.db.Where("series = ? AND status = 1", series).
+		Order("series_order ASC, created_at ASC").
+		Find(&articles).Error
+	return articles, err
+}
+
+func (r *articleRepository) RenameSeries(oldName, newName string) error {
+	return r.db.Model(&model.Article{}).Where("series = ?", oldName).Update("series", newName).Error
+}
+
+func (r *articleRepository) RemoveSeries(name string) error {
+	return r.db.Model(&model.Article{}).Where("series = ?", name).Update("series", "").Error
 }

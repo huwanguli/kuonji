@@ -42,6 +42,11 @@ const routes = [
     component: () => import('../views/EditorView.vue'),
   },
   {
+    path: '/series/:name',
+    name: 'series',
+    component: () => import('../views/SeriesView.vue'),
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/',
   },

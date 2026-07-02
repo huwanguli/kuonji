@@ -46,8 +46,9 @@ frontend/src/
 └── views/                     # 页面级组件
     ├── HomeView.vue           # 首页：文章列表 + 分类/标签/系列筛选
     ├── ArticleView.vue        # 文章详情：正文 + 系列导航 + 评论区
+    ├── SeriesView.vue         # 系列详情：封面/简介 + 文章列表
     ├── EditorView.vue         # 文章编辑器：Markdown 编辑 + 实时预览
-    ├── AdminView.vue          # 管理入口：登录 / 仪表盘 + 分类/标签管理
+    ├── AdminView.vue          # 管理入口：登录 / 仪表盘 + 分类/标签/系列管理
     ├── AdminArticles.vue      # 文章管理：列表 + 状态筛选 + 评论管理
     ├── AdminArticleView.vue   # 文章预览（只读）：正文 + 评论区管理
     └── AdminComments.vue      # 全局评论管理
@@ -82,6 +83,7 @@ frontend/src/
 |---|---|---|
 | `/` | `HomeView` | 首页：文章列表 + 分类/标签/系列筛选 |
 | `/article/:slug` | `ArticleView` | 文章详情：正文 + 系列导航 + 评论 |
+| `/series/:name` | `SeriesView` | 系列详情：封面/简介 + 文章列表 |
 | `/admin` | `AdminView` | 未登录→登录页；已登录→仪表盘 |
 | `/admin/articles` | `AdminArticles` | 文章管理（状态筛选 + 行内评论管理） |
 | `/admin/articles/view/:id` | `AdminArticleView` | 管理员文章预览（只读）+ 评论管理 |
@@ -147,6 +149,8 @@ App.vue
     │   ├── CommentForm.vue
     │   └── CommentList.vue      (嵌套回复树)
     │
+    ├── SeriesView.vue         (不含子组件，全部内联)
+    │
     ├── EditorView.vue           (不含子组件，全部内联)
     │
     ├── AdminView.vue            (不含子组件，分类/标签 CRUD 内联)
@@ -206,7 +210,11 @@ upload
 └── image(file)               → POST /api/admin/upload        (需认证, multipart)
 
 series
-└── list()                    → GET  /api/series              (公开)
+├── list()                    → GET  /api/series              (公开)
+├── detail(name)              → GET  /api/series/:name        (公开)
+├── create(data)              → POST /api/admin/series        (需认证)
+├── update(id, data)          → PUT  /api/admin/series/:id    (需认证)
+└── delete(id)                → DEL  /api/admin/series/:id    (需认证)
 
 announcements
 └── list()                    → GET  /api/announcements       (公开)
