@@ -2,6 +2,7 @@ kuonji.xyz {
 	encode gzip
 
 	handle /api/* {
+		header_up Authorization {http.request.header.Authorization}
 		reverse_proxy backend:8080
 	}
 
