@@ -1,12 +1,6 @@
 kuonji.xyz {
 	encode gzip
 
-	header {
-		Cache-Control "public, max-age=31536000, immutable"
-	}
-	header /index.html Cache-Control "no-cache"
-	header /assets/* Cache-Control "public, max-age=31536000, immutable"
-
 	handle /api/* {
 		reverse_proxy backend:8080
 	}
@@ -16,6 +10,12 @@ kuonji.xyz {
 	}
 
 	handle {
+		header {
+			Cache-Control "public, max-age=31536000, immutable"
+		}
+		header /index.html Cache-Control "no-cache"
+		header /assets/* Cache-Control "public, max-age=31536000, immutable"
+
 		root * /usr/share/caddy
 		try_files {path} /index.html
 		file_server
