@@ -32,13 +32,12 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useTheme } from '../composables/useTheme'
 
 const { toggle, isDark } = useTheme()
 
 const route = useRoute()
-const router = useRouter()
 
 const isAdminPage = computed(() => {
   return route.path.startsWith('/admin') || route.path.startsWith('/editor')
@@ -46,7 +45,7 @@ const isAdminPage = computed(() => {
 
 function logout() {
   localStorage.removeItem('token')
-  router.push('/admin')
+  window.location.href = '/admin'
 }
 </script>
 

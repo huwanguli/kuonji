@@ -274,6 +274,10 @@ docker compose up -d --build
 
 架构：`Caddy :80/:443` → 自动 Let's Encrypt HTTPS + 静态前端 + 反代 `/api` `/uploads` → `backend:8080` → MySQL。
 
+> Caddy 不要配置全局 `Cache-Control`，否则 API 的 401 响应会被浏览器缓存，导致登录死循环。
+
+### 故障排查
+
 ### 手动部署
 
 ```bash
