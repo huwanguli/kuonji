@@ -85,7 +85,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { articles, comments as commentsApi } from '../api'
 import { addHeadingIds } from '../utils/html'
@@ -144,6 +144,7 @@ function formatDate(dateStr) {
 }
 
 onMounted(fetchArticle)
+watch(() => route.params.slug, fetchArticle)
 </script>
 
 <style scoped>
@@ -442,7 +443,7 @@ time,
 }
 
 .series-toc-order {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: var(--text-xs);
   color: var(--color-muted);
   width: 20px;
