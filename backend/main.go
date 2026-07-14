@@ -13,6 +13,7 @@ import (
 	"zblog-backend/internal/repository"
 	"zblog-backend/internal/router"
 	"zblog-backend/internal/service"
+	"zblog-backend/internal/utils"
 )
 
 func main() {
@@ -34,6 +35,8 @@ func main() {
 	if err := model.InitDB(&cfg.Database, gormLogLevel); err != nil {
 		logrus.Fatalf("failed to initialize database: %v", err)
 	}
+
+	migrateArticleHTML()
 
 	authService := service.NewAuthService(repository.NewUserRepository(model.DB))
 	if err := authService.InitAdmin(); err != nil {
@@ -66,5 +69,33 @@ func main() {
 	logrus.Infof("server starting on %s", addr)
 	if err := r.Run(addr); err != nil {
 		logrus.Fatalf("server failed: %v", err)
+	}
+}
+
+func migrateArticleHTML() {
+	var articles []model.Article
+	if err := model.DB.Select("id", "content_md", "content_html").Find(&articles).Error; err != nil {
+		logrus.Warnf("migrate article html: query failed: %v", err)
+		return
+	}
+
+	updated := 0
+	for _, a := range articles {
+		html, err := utils.RenderMarkdown(a.ContentMD)
+		if err != nil {
+			logrus.Warnf("migrate article html: render id=%d failed: %v", a.ID, err)
+			continue
+		}
+		if html == a.ContentHTML {
+			continue
+		}
+		if err := model.DB.Model(&model.Article{}).Where("id = ?", a.ID).Update("content_html", html).Error; err != nil {
+			logrus.Warnf("migrate article html: update id=%d failed: %v", a.ID, err)
+			continue
+		}
+		updated++
+	}
+	if updated > 0 {
+		logrus.Infof("migrate article html: re-rendered %d articles", updated)
 	}
 }

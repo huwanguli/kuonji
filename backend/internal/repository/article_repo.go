@@ -21,6 +21,7 @@ type ArticleRepository interface {
 	RenameSeries(oldName, newName string) error
 	RemoveSeries(name string) error
 	IncrementViewCount(id uint) error
+	UpdateContentHTML(id uint, html string) error
 }
 
 type articleRepository struct {
@@ -161,4 +162,8 @@ func (r *articleRepository) RenameSeries(oldName, newName string) error {
 
 func (r *articleRepository) RemoveSeries(name string) error {
 	return r.db.Model(&model.Article{}).Where("series = ?", name).Update("series", "").Error
+}
+
+func (r *articleRepository) UpdateContentHTML(id uint, html string) error {
+	return r.db.Model(&model.Article{}).Where("id = ?", id).Update("content_html", html).Error
 }

@@ -51,6 +51,15 @@ func TestRenderMarkdownCode(t *testing.T) {
 	assert.Contains(t, html, "<code")
 }
 
+func TestRenderMarkdownTable(t *testing.T) {
+	md := "| A | B |\n| --- | --- |\n| 1 | 2 |\n"
+	html, err := RenderMarkdown(md)
+	require.NoError(t, err)
+	assert.Contains(t, html, "<table>")
+	assert.Contains(t, html, "<th>")
+	assert.Contains(t, html, "<td>")
+}
+
 func TestGenerateAndParseToken(t *testing.T) {
 	secret := "test-secret"
 	token, err := GenerateToken(1, "admin", secret, 24*time.Hour)
